@@ -1,0 +1,8 @@
+[IRC]
+ip=irc.quakenet.org
+port=6667
+
+[GAMESERVER]
+ip=localhost
+port=27960
+rconPass=makako
