@@ -1,8 +1,10 @@
 [IRC]
 ip=irc.quakenet.org
 port=6667
+chan=#test
+nick=ioQIC_bot
 
 [GAMESERVER]
 ip=localhost
 port=27960
-rconPass=makako
+rconPass=password

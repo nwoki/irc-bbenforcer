@@ -23,16 +23,13 @@
 #include <QObject>
 #include <QString>
 
-class QSettings;
-
 class Connection : public QObject
 {
     Q_OBJECT
     public:
-    Connection( QAbstractSocket::SocketType type/*, const QString &ip, int port */);
+        Connection( QAbstractSocket::SocketType type );
         ~Connection();
 
-        void loadSettings();
         void startConnect();
         QAbstractSocket *socket();  //returns the socket in use
 
@@ -43,11 +40,11 @@ class Connection : public QObject
         void reconnect();
 
     private:
+        void loadSettings();
+
         int m_port;
         QAbstractSocket *m_socket;
-        QSettings *m_settings;
-        QString m_ip;//, m_socketType;
-
+        QString m_chan, m_ip, m_nick;
 };
 
 #endif // CONNECTION_H

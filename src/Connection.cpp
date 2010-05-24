@@ -26,20 +26,18 @@
 #include <QTimer>
 #include <QUdpSocket>
 
-Connection::Connection( QAbstractSocket::SocketType type/*, const QString &ip, int port */)
+Connection::Connection( QAbstractSocket::SocketType type )
     : m_port( 0 )
     , m_socket( 0 )
-    , m_settings( 0 )
-    , m_ip( 0 )
-//    , m_socketType( 0 )
+    , m_chan( QString() )
+    , m_ip( QString() )
+    , m_nick( QString() )
 {
     if( type == QAbstractSocket::TcpSocket )
         m_socket = new QTcpSocket();
     else if( type == QAbstractSocket::UdpSocket )
         m_socket = new QUdpSocket();
 
-    //set config file
-    m_settings = new QSettings( QDir::toNativeSeparators( "cfg/config" ), QSettings::IniFormat );
     loadSettings();
 }
 
@@ -50,20 +48,31 @@ Connection::~Connection()
 
 void Connection::loadSettings()
 {
-    if( !m_settings ) {
-        qWarning( "\e[1;31m Connection::loadSettings FAILed to load settings. Check your config file" );
+    //set config file
+    QSettings settings( QDir::toNativeSeparators( "cfg/config" ), QSettings::IniFormat );
+
+    if( settings.status() == QSettings::FormatError ) {
+        qWarning( "\e[1;31m Connection::loadSettings FAILED to load settings. Format Error, check your config file\e[0m" );
         return;
     }
 
     if( m_socket->socketType() == QAbstractSocket::TcpSocket ) {    //load irc settings
         qDebug( "Connection::loadSettings IRC SETTINGS" );
-        int values = m_settings->beginReadArray( "IRC" );
-        //if( values < 0 )
-        qDebug() << values;
 
-        qDebug() << m_settings->value( "ip" );
-        m_ip = m_settings->value( "ip" ).toString();
-        m_port = m_settings->value( "port" ).toInt();
+        /*int values = */settings.beginReadArray( "IRC" );
+        /* TODO check validity of settings, shouldn't pass empty settings */
+//        if(  ) {
+//            qWarning( "\e[1;31m Connection::loadSettings FAIL, no values to read for IRC settings. Check your config file\e[0m" );
+//            return;
+//        }
+//        qDebug() << "VALUES #" << values;
+
+        m_ip = settings.value( "ip" ).toString();
+        m_port = settings.value( "port" ).toInt();
+        m_chan = settings.value( "chan" ).toString();
+        m_nick = settings.value( "nick" ).toString();
+
+//        qDebug() << "values saved are-> " << m_ip << " " << m_port << " " << m_chan << " " << m_nick;
     }
     else if( m_socket->socketType() == QAbstractSocket::UdpSocket ) {   //load game settings
 
@@ -72,6 +81,8 @@ void Connection::loadSettings()
         qWarning( "Connection::loadSettings Unknown socket type, not loading settings" );
         return;
     }
+    //close settings
+    settings.endArray();
 }
 
 void Connection::startConnect()
@@ -97,7 +108,7 @@ void Connection::startConnect()
 QAbstractSocket *Connection::socket()
 {
     if( !m_socket ) {
-        qWarning( "Connection::socket no socket to return! (created empty one) " );
+        qWarning( "Connection::socket no socket to return!" );//(created empty one) " );
         return 0;
 //        if( m_type == "tcp" )
 //           return new QTcpSocket();
@@ -142,11 +153,11 @@ void Connection::handleSocketErrors( QAbstractSocket::SocketError error )
             break;
         }
         case QAbstractSocket::HostNotFoundError: {
-            std::cout << "\e[0;33mPlease check that all info was inserted correctly\e[0m" << std::endl;
+            std::cout << "\e[0;33m Please control your config file and check that all values have been inserted correctly\e[0m" << std::endl;
             break;
         }
         case QAbstractSocket::SocketAccessError: {
-            std::cout << "\e[0;33 the application lacks the required privileges\e[0m" << std::endl;
+            std::cout << "\e[0;33 The application lacks the required privileges\e[0m" << std::endl;
             break;
         }
         case QAbstractSocket::SocketTimeoutError: {
@@ -158,6 +169,7 @@ void Connection::handleSocketErrors( QAbstractSocket::SocketError error )
 
 void Connection::reconnect()
 {
+    //delete and recreate socket
     QAbstractSocket *aux = m_socket;
     m_socket = 0;
 
