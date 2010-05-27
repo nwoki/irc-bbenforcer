@@ -33,11 +33,19 @@ class IrcController : public QObject
 
         QAbstractSocket *connectionSocket();  //returns socket in 'connection'
         void logIn();
-        void ircCommendParser( const QByteArray &user, const QByteArray &msg );
+        void ircCommandParser( const QByteArray &user, const QByteArray &msg );
         void pong( const QByteArray &pingData );
 
     private:
+        bool auth( const QByteArray &user, const QByteArray &password );
+        bool checkIfAuthed( const QByteArray &nick );
+        QByteArray genChannelMessage( const QByteArray &messageToSend );
+        QByteArray genPrivateMessage( const QByteArray &nick, const QByteArray &messageToSend );
+        void kick( const QByteArray &nick, const QByteArray &reason );
+
+
         Connection *m_connection;
+        //keep copy of connection's settings???
 };
 
 #endif // IRCCONTROLLER_H

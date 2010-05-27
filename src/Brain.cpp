@@ -96,7 +96,7 @@ void Brain::parseData()
             //irc command
             if( msg.startsWith( '!' ) ) {
                 qDebug() << user << " ASKED FOR IRC BOT COMMAND with :" << msg;
-                m_ircControl->ircCommendParser( user, msg );
+                m_ircControl->ircCommandParser( user, msg );
             }
 
             //game server command
