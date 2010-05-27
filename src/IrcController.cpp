@@ -66,7 +66,12 @@ void IrcController::logIn()
     connectionSocket()->write( byteJoin );
 }
 
-void IrcController::pong( QByteArray pingData )
+void IrcController::ircCommendParser( const QByteArray &user, const QByteArray &msg )
+{
+
+}
+
+void IrcController::pong( const QByteArray &pingData )
 {
     QList<QByteArray>pingSplit = pingData.split( ':' );
     connectionSocket()->write( "PONG :" + pingSplit.at( 1 ) + "\r\n");

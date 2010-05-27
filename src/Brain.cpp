@@ -22,7 +22,6 @@
 #include "IrcController.h"
 
 #include <QAbstractSocket>
-#include <QSettings>
 #include <QDebug>
 
 Brain::Brain()
@@ -45,14 +44,14 @@ Brain::~Brain()
     delete m_ircControl;
 }
 
-QByteArray Brain::extractText( QByteArray text )
+QByteArray Brain::extractText( const QByteArray &text )
 {
     QList< QByteArray >aux = text.split( ':' );
     //qDebug() << "TEXT2 -> " << aux.value( 2 ).trimmed();
     return aux.value( 2 ).trimmed();
 }
 
-QByteArray Brain::extractUser( QByteArray text )
+QByteArray Brain::extractUser( const QByteArray &text )
 {
     QList< QByteArray >aux = text.split( '!' );
     //qDebug() << "USER -> " << aux.value( 0 ).right( aux.value( 0 ).size() - 1 );
@@ -97,6 +96,7 @@ void Brain::parseData()
             //irc command
             if( msg.startsWith( '!' ) ) {
                 qDebug() << user << " ASKED FOR IRC BOT COMMAND with :" << msg;
+                m_ircControl->ircCommendParser( user, msg );
             }
 
             //game server command

@@ -33,8 +33,8 @@ class Brain : public QObject
         Brain();
         ~Brain();
 
-        QByteArray extractText( QByteArray text );
-        QByteArray extractUser( QByteArray text );
+        QByteArray extractText( const QByteArray &text );
+        QByteArray extractUser( const QByteArray &text );
 
     public slots:
         void parseData();

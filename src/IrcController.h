@@ -33,7 +33,8 @@ class IrcController : public QObject
 
         QAbstractSocket *connectionSocket();  //returns socket in 'connection'
         void logIn();
-        void pong( QByteArray pingData );
+        void ircCommendParser( const QByteArray &user, const QByteArray &msg );
+        void pong( const QByteArray &pingData );
 
     private:
         Connection *m_connection;
