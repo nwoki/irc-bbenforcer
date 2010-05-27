@@ -23,7 +23,6 @@
 
 class Connection;
 class QAbstractSocket;
-//class QSettings;
 
 class IrcController : public QObject
 {
@@ -33,10 +32,11 @@ class IrcController : public QObject
         ~IrcController();
 
         QAbstractSocket *connectionSocket();  //returns socket in 'connection'
+        void logIn();
+        void pong( QByteArray pingData );
 
     private:
         Connection *m_connection;
-//        QSettings *m_settings;
 };
 
 #endif // IRCCONTROLLER_H

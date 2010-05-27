@@ -35,12 +35,7 @@ Brain::Brain()
 
     //read from server when data is available
     connect( m_ircControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseData() ) );
-
-
-    //QObject::connect( m_ircControl->connectionSocket(), SIGNAL(), this, SLOT( )
-    //load settings
     //connect various object attributes
-
 }
 
 Brain::~Brain()
@@ -50,10 +45,72 @@ Brain::~Brain()
     delete m_ircControl;
 }
 
+QByteArray Brain::extractText( QByteArray text )
+{
+    QList< QByteArray >aux = text.split( ':' );
+    //qDebug() << "TEXT2 -> " << aux.value( 2 ).trimmed();
+    return aux.value( 2 ).trimmed();
+}
+
+QByteArray Brain::extractUser( QByteArray text )
+{
+    QList< QByteArray >aux = text.split( '!' );
+    //qDebug() << "USER -> " << aux.value( 0 ).right( aux.value( 0 ).size() - 1 );
+    return aux.value( 0 ).right( aux.value( 0 ).size() - 1 ).trimmed();
+}
+
+/*******************
+*      SLOTS       *
+********************/
+
+//from here i dispatch irc lines with commands to corrispective classes
 void Brain::parseData()
 {
-    qDebug("Brain::parseData");
+    while( m_ircControl->connectionSocket()->bytesAvailable() ) {
+        QByteArray serverText = m_ircControl->connectionSocket()->readLine( 2000 );
+        qDebug() << serverText;
 
-    while( m_ircControl->connectionSocket()->bytesAvailable() )
-        qDebug() << m_ircControl->connectionSocket()->readLine(200);
+        //start sending info to login and join
+        if( serverText.contains( "NOTICE AUTH :*** Found your hostname" ) ) {
+            m_ircControl->logIn();
+            return;
+        }
+
+        //extra login send to make sure i get in channel
+        else if( serverText.contains( "NOTICE AUTH :*** No ident response" ) ) {
+            m_ircControl->logIn();
+            return;
+        }
+
+        //send back ping data
+        else if( serverText.contains( "PING" ) ) {
+            m_ircControl->pong( serverText );
+            return;
+        }
+
+        //control this after i get the "end of" line from server
+        else if( serverText.contains( "PRIVMSG" ) ) {
+            //someone's talking
+            QByteArray user = extractUser( serverText );
+            QByteArray msg = extractText( serverText );
+
+            //irc command
+            if( msg.startsWith( '!' ) ) {
+                qDebug() << user << " ASKED FOR IRC BOT COMMAND with :" << msg;
+            }
+
+            //game server command
+            else if( msg.startsWith( '@' ) ) {
+                qDebug() << user << " ASKED FOR GAME BOT COMMAND with :" << msg;
+            }
+
+            //nothing, normal msg
+            else {
+                qDebug() << user << " SENT NORMAL MESSAGE.LOG IT!";
+            }
+
+            //check on database. User needs to login whenever he has new ip to use bot
+            //bot checks database and adds the admin
+        }
+    }
 }

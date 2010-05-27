@@ -35,6 +35,6 @@ int main(int argc, char *argv[])
     std::cout << "* See LICENSE for details                                       *" << std::endl;
     std::cout << "*****************************************************************\e[0m" << std::endl;
 
-    Brain *asd = new Brain();
+    Brain *brain = new Brain();
     return a.exec();
 }

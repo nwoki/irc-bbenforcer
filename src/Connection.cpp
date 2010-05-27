@@ -46,6 +46,16 @@ Connection::~Connection()
     delete m_socket;
 }
 
+QMap< QString, QString > Connection::ircSettings()
+{
+    QMap< QString, QString >  aux;
+    aux.insert( "ip", m_ip );
+    aux.insert( "port", QString::number( m_port ) );
+    aux.insert( "nick", m_nick );
+    aux.insert( "chan", m_chan );
+    return aux;
+}
+
 void Connection::loadSettings()
 {
     //set config file
@@ -59,26 +69,38 @@ void Connection::loadSettings()
     if( m_socket->socketType() == QAbstractSocket::TcpSocket ) {    //load irc settings
         qDebug( "Connection::loadSettings IRC SETTINGS" );
 
-        /*int values = */settings.beginReadArray( "IRC" );
-        /* TODO check validity of settings, shouldn't pass empty settings */
-//        if(  ) {
-//            qWarning( "\e[1;31m Connection::loadSettings FAIL, no values to read for IRC settings. Check your config file\e[0m" );
-//            return;
-//        }
-//        qDebug() << "VALUES #" << values;
+        settings.beginReadArray( "IRC" );
 
         m_ip = settings.value( "ip" ).toString();
-        m_port = settings.value( "port" ).toInt();
-        m_chan = settings.value( "chan" ).toString();
-        m_nick = settings.value( "nick" ).toString();
+        if( m_ip.isEmpty() ) {
+            qWarning( "\e[1;31mConnection::loadSettings can't load 'ip'. Check your config file\e[0m" );
+            return;
+        }
 
-//        qDebug() << "values saved are-> " << m_ip << " " << m_port << " " << m_chan << " " << m_nick;
+        bool ok;
+        m_port = settings.value( "port" ).toInt( &ok );
+        if( !ok ) {
+            qWarning( "\e[1;31mConnection::loadSettings can't load 'port'. Check your config file.\e[0m" );
+            return;
+        }
+
+        m_chan = settings.value( "chan" ).toString();
+        if( m_chan.isEmpty() ) {
+            qWarning( "\e[1;31mConnection::loadSettings can't load 'chan'. Check your config file\e[0m" );
+            return;
+        }
+
+        m_nick = settings.value( "nick" ).toString();
+        if( m_nick.isEmpty() ) {
+            qWarning( "\e[1;31mConnection::loadSettings can't load 'nick'. Check your config file\e[0m" );
+            return;
+        }
     }
     else if( m_socket->socketType() == QAbstractSocket::UdpSocket ) {   //load game settings
 
     }
     else {
-        qWarning( "Connection::loadSettings Unknown socket type, not loading settings" );
+        qWarning( "\e[1;31mConnection::loadSettings Unknown socket type, not loading settings\e[0m" );
         return;
     }
     //close settings
@@ -108,15 +130,10 @@ void Connection::startConnect()
 QAbstractSocket *Connection::socket()
 {
     if( !m_socket ) {
-        qWarning( "Connection::socket no socket to return!" );//(created empty one) " );
+        qWarning( "Connection::socket no socket to return!" );
         return 0;
-//        if( m_type == "tcp" )
-//           return new QTcpSocket();
-//        else if( m_type == "udp" )
-//            return new QUdpSocket();
     }
-    else
-        return m_socket;
+    else return m_socket;
 }
 
 
@@ -169,7 +186,7 @@ void Connection::handleSocketErrors( QAbstractSocket::SocketError error )
 
 void Connection::reconnect()
 {
-    //delete and recreate socket
+    //delete and recreate same socket
     QAbstractSocket *aux = m_socket;
     m_socket = 0;
 

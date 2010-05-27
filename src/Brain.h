@@ -24,6 +24,7 @@
 class DbController;
 class GameController;
 class IrcController;
+class QByteArray;
 
 class Brain : public QObject
 {
@@ -32,12 +33,13 @@ class Brain : public QObject
         Brain();
         ~Brain();
 
+        QByteArray extractText( QByteArray text );
+        QByteArray extractUser( QByteArray text );
+
     public slots:
         void parseData();
 
     private:
-        //void parse( const QByteArray &line );
-
         DbController *m_dbControl;
         GameController *m_gameControl;
         IrcController *m_ircControl;

@@ -30,6 +30,7 @@ class Connection : public QObject
         Connection( QAbstractSocket::SocketType type );
         ~Connection();
 
+        QMap< QString, QString > ircSettings();
         void startConnect();
         QAbstractSocket *socket();  //returns the socket in use
 
