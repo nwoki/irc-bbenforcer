@@ -11,5 +11,3 @@ rconPass=password
 
 [DATABASE]
 dbName=test.sqlite
-
-[OPLIST](use groups here)

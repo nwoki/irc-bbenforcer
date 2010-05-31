@@ -23,6 +23,7 @@
 #include <QtSql>
 
 #define settingsFile "cfg/config"
+#define adminFile "cfg/admins"
 
 DbController::DbController()
     : QSqlDatabase( QSqlDatabase::addDatabase( "QSQLITE" ) )
@@ -52,9 +53,9 @@ void DbController::createDatabaseFirstRun()
     QSqlQuery query;
     //oplist table
     if ( !query.exec( "create table oplist("
-                         "id INTEGER PRIMARY KEY,"  //auotoincrement
+                         //"id INTEGER PRIMARY KEY,"  //auotoincrement need this??
                          "nick TEXT,"
-                         "guid TEXT);" ) ) {
+                         "password TEXT);" ) ) {
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( oplist table )\e[0m" );
         return;
     }
@@ -65,14 +66,15 @@ void DbController::createDatabaseFirstRun()
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( authed table )\e[0m" );
         return;
     }
-
     //close database
     close();
 }
 
-void DbController::loadAdmins( QSettings &settings )
+void DbController::loadAdmins()
 {
-    qDebug( "DbController::loadAdmins NEED TO IMPLEMENT" );
+    qDebug( "DbController::loadAdmins" );
+
+    QSettings settings( adminFile, QSettings::IniFormat );
 
     //open database for writing
     if( !open() ) {
@@ -80,14 +82,38 @@ void DbController::loadAdmins( QSettings &settings )
         return;
     }
 
-    int size = settings.beginReadArray( "oplist" );
+    int size = settings.beginReadArray( "OPLIST" );
+
+    QString auxNick, auxPassword;
 
     for( int i = 0; i < size; ++i ) {
         settings.setArrayIndex( i );
-        //settings.value()
+        auxNick = settings.value( "nick" ).toString();
+        auxPassword = settings.value( "password" ).toString();
 
+        QSqlQuery query;
+
+        //check existance on database
+        if( query.exec( "select nick "
+                    "from oplist "
+                    "where nick = '"
+                    + auxNick + "';" ) ) {
+            QSqlRecord rec = query.record();
+
+            if( rec.count() == 0 ) {    //not in database
+                //save to database
+                if( !query.exec( "insert into oplist values('" + auxNick + "','" + auxPassword + "');" ) ) {
+                    qWarning() << "\e[1;31mDbController::loadAdmins FAILED to execute query" << query.lastError() << "\e[0m" ;
+                    return;
+                }
+            }
+            else    //found match
+                qWarning( "\e[0;33m%s already in database\e[0m", qPrintable( auxNick ) );
+        }
+        else
+            qWarning() <<  "\e[1;31mDbController::loadAdmins didn't execute query " << query.lastError() << "\e[0m";
     }
-
+    settings.endArray();
     close();
 }
 
@@ -100,8 +126,7 @@ void DbController::setup()
 
     //check if database folder exists
     if( !QDir().exists( databasePath ) ) {
-        //create directory
-        if( !QDir().mkdir( "database" ) ) {
+        if( !QDir().mkdir( "database" ) ) { //create directory
             qWarning( "\e[1;31mDbController::setup can't create folder for database. Check permissions\e[0m" );
             return;
         }
@@ -130,7 +155,7 @@ void DbController::setup()
     if( QFile::exists( databasePath + dbName ) ) {
         qWarning( "\e[0;33mDbController::setup found database.. skipping setup\e[0m" );
         settings.endArray();
-        loadAdmins( settings );  //load and check if new admins have been added to file
+        loadAdmins();  //load and check if new admins have been added to file
         return;
     }
 //    else    //set database
@@ -152,5 +177,5 @@ void DbController::setup()
     //i only opened database to test settings were correct. Now close
     close();
     createDatabaseFirstRun();
-    loadAdmins( settings );
+    loadAdmins();
 }

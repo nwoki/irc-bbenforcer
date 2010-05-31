@@ -31,7 +31,7 @@ class DbController : public QSqlDatabase
 
     private:
         void createDatabaseFirstRun();
-        void loadAdmins( QSettings &settings );
+        void loadAdmins();
         void setup();
 //        void populateDatabase();
 };
