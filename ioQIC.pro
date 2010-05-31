@@ -1,7 +1,8 @@
 # -------------------------------------------------
 # Project created by QtCreator 2010-05-20T11:57:54
 # -------------------------------------------------
-QT += network
+QT += network \
+      sql
 QT -= gui
 TARGET = ioQIC
 CONFIG += console

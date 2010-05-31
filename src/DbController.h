@@ -19,10 +19,21 @@
 #ifndef DBCONTROLLER_H
 #define DBCONTROLLER_H
 
-class DbController
+#include <QSqlDatabase>
+
+class QSettings;
+
+class DbController : public QSqlDatabase
 {
-public:
-    DbController();
+    public:
+        DbController();
+        ~DbController();
+
+    private:
+        void createDatabaseFirstRun();
+        void loadAdmins( QSettings &settings );
+        void setup();
+//        void populateDatabase();
 };
 
 #endif // DBCONTROLLER_H

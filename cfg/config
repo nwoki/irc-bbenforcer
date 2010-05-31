@@ -8,3 +8,8 @@ nick=ioQIC_bot
 ip=localhost
 port=27960
 rconPass=password
+
+[DATABASE]
+dbName=test.sqlite
+
+[OPLIST](use groups here)
