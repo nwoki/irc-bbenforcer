@@ -29,10 +29,14 @@ class DbController : public QSqlDatabase
         DbController();
         ~DbController();
 
+        bool auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );    //check database and return result for auth
+
     private:
-        void createDatabaseFirstRun();
-        void loadAdmins();
-        void setup();
+        void addToAuthed( const QByteArray &nick, const QByteArray &ip );
+        void createDatabaseFirstRun();  //creates authed and oplist tables
+        bool isAuthed( const QByteArray &nick, const QByteArray &ip );
+        void loadAdmins();  //loads admins to oplist table
+        void setup();   //setup the database
 //        void populateDatabase();
 };
 

@@ -36,16 +36,74 @@ DbController::~DbController()
     qDebug( "DbController::~DbController" );
 }
 
+bool DbController::auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip )
+{
+    qDebug( "DbController::auth" );
+
+    if( !isOpen() ) { //open connection to database
+        if( !open() ) {
+            qWarning( "\e[1;31mDbController::auth can't open database\e[0m" );
+            return false;
+        }
+    }
+
+    //check to see if user is already authed
+    //TODO -> isAuthed
+#warning TODO isAuthed()
+    //
+
+    QSqlQuery query;
+    if( !query.exec( "select * "
+                      "from oplist "
+                      "where nick='"
+                      + nick +
+                      "' and password='"
+                      + password +
+                      "';" ) ) {
+        qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );//, qPrintable( query.lastError() ) );
+        close();
+        return false;
+    }
+
+    if( !query.next() ) {   //not on auth database
+        qWarning( "\e[0;33mDbController::auth %s is not on oplist", qPrintable ( QString( nick ) ) );
+        return false;
+    }
+
+    //add to authed table
+    addToAuthed( nick, ip );
+    close();
+    return true;
+}
 
 /*******************************
 *      PRIVATE FUNCTIONS       *
 ********************************/
 
+void DbController::addToAuthed( const QByteArray &nick, const QByteArray &ip )
+{
+    qDebug( "DbController::addToAuthed" );
+    if( !isOpen() ) {   //open database
+        if( !open() ) {
+            qWarning( "\e[1;31mDbController::addToAuthed can't open database\e[0m" );
+            return;
+        }
+    }
+
+    QSqlQuery query;
+    //Insert Into TableName (FieldName1, FieldName2) Values (Value1, Value2);
+    if( !query.exec( "insert into authed( nick, ip ) values ('" + nick + "', '" + ip + "');" ) ) {
+        qWarning( "\e[1;31mDbController::addToAuthed can't add user to authed table\e[0m" );
+        close();
+        return;
+    }
+    else qDebug("added");
+}
 
 void DbController::createDatabaseFirstRun()
 {
     qDebug( "DbController::createDatabaseFirstRun" );
-    if( !open() ) { //open database
+    if( !open() ) { //open connection to database
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun can't open database\e[0m" );
         return;
     }
@@ -70,6 +128,13 @@ void DbController::createDatabaseFirstRun()
     close();
 }
 
+bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
+{
+
+
+
+}
+
 void DbController::loadAdmins()
 {
     qDebug( "DbController::loadAdmins" );
@@ -83,13 +148,14 @@ void DbController::loadAdmins()
     }
 
     int size = settings.beginReadArray( "OPLIST" );
-
     QString auxNick, auxPassword;
 
     for( int i = 0; i < size; ++i ) {
         settings.setArrayIndex( i );
         auxNick = settings.value( "nick" ).toString();
         auxPassword = settings.value( "password" ).toString();
+
+        qDebug() << "nick -> " << auxNick << "pass -> " << auxPassword;
 
         QSqlQuery query;
 
@@ -98,17 +164,19 @@ void DbController::loadAdmins()
                     "from oplist "
                     "where nick = '"
                     + auxNick + "';" ) ) {
-            QSqlRecord rec = query.record();
 
-            if( rec.count() == 0 ) {    //not in database
-                //save to database
+#warning fix this, doesn't load admins DbController::loadAdmins();
+#warning is fixed. If there are problems, check here
+
+            if( query.next() )
+                qWarning( "\e[0;33m%s already in database\e[0m", qPrintable( auxNick ) );
+
+            else {    //write to database
                 if( !query.exec( "insert into oplist values('" + auxNick + "','" + auxPassword + "');" ) ) {
                     qWarning() << "\e[1;31mDbController::loadAdmins FAILED to execute query" << query.lastError() << "\e[0m" ;
                     return;
                 }
             }
-            else    //found match
-                qWarning( "\e[0;33m%s already in database\e[0m", qPrintable( auxNick ) );
         }
         else
             qWarning() <<  "\e[1;31mDbController::loadAdmins didn't execute query " << query.lastError() << "\e[0m";
@@ -176,6 +244,7 @@ void DbController::setup()
 
     //i only opened database to test settings were correct. Now close
     close();
+
     createDatabaseFirstRun();
     loadAdmins();
 }
