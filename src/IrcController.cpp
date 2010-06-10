@@ -18,13 +18,15 @@
 
 #include "IrcController.h"
 #include "Connection.h"
+#include "DbController.h"
 
 #include <QAbstractSocket>
 
 #define end "\r\n"
 
-IrcController::IrcController()
+IrcController::IrcController( DbController *db )
     : m_connection( new Connection( QAbstractSocket::TcpSocket ) )  //get these on constructor
+    , m_dbController( db )
 {
     qDebug( "IrcController::IrcController" );
     m_connection->startConnect();
@@ -33,6 +35,7 @@ IrcController::IrcController()
 IrcController::~IrcController()
 {
     delete m_connection;
+    delete m_dbController;
 }
 
 QAbstractSocket *IrcController::connectionSocket()
@@ -68,8 +71,9 @@ void IrcController::logIn()
     connectionSocket()->write( byteJoin );
 }
 
-void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &msg )
+void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
 {
+    qDebug() << "MESSAGE I GET IS -> " << msg;
     //help
     if( msg.contains( "!help" ) ) {
         //print help
@@ -86,7 +90,7 @@ void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &
             return;
         }
         else {
-            if( !auth( user, aux.at( 1 ) ) ) {
+            if( !m_dbController->auth( user, aux.at( 1 )/* <- password*/, ip ) ) {
                 //not authed
                 connectionSocket()->write( genPrivateMessage( user, "NOT AUTHED!Either you used the wrong password or you're not on my database" ) );
                 return;
@@ -134,14 +138,14 @@ void IrcController::pong( const QByteArray &pingData )
 bool IrcController::auth( const QByteArray &user, const QByteArray &password )
 {
     //call database and do query
-    qDebug( "IrcController::auth NEED TO IMPLEMENT" );
+    qDebug( "\e[1;31mIrcController::auth NEED TO IMPLEMENT\e[0m" );
     return false;
 }
 
 bool IrcController::checkIfAuthed( const QByteArray &nick )
 {
     //check authed table
-    qDebug( "IrcController::checkIfAuthed NOT IMPLEMENTED YET" );
+    qDebug( "\e[1;31mIrcController::checkIfAuthed NOT IMPLEMENTED YET\e[0m" );
     return false;
 }
 

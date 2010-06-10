@@ -33,6 +33,7 @@ class Brain : public QObject
         Brain();
         ~Brain();
 
+        QByteArray extractIp( const QByteArray &text );
         QByteArray extractText( const QByteArray &text );
         QByteArray extractUser( const QByteArray &text );
 
@@ -40,7 +41,7 @@ class Brain : public QObject
         void parseData();
 
     private:
-        DbController *m_dbControl;
+        //DbController *m_dbControl;    don't need this. Game and irc got pointer to it
         GameController *m_gameControl;
         IrcController *m_ircControl;
 };

@@ -22,18 +22,19 @@
 #include <QObject>
 
 class Connection;
+class DbController;
 class QAbstractSocket;
 
 class IrcController : public QObject
 {
     Q_OBJECT
     public:
-        IrcController();
+        IrcController( DbController *db );
         ~IrcController();
 
         QAbstractSocket *connectionSocket();  //returns socket in 'connection'
         void logIn();
-        void ircCommandParser( const QByteArray &user, const QByteArray &msg );
+        void ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
         void pong( const QByteArray &pingData );
 
     private:
@@ -45,6 +46,7 @@ class IrcController : public QObject
 
 
         Connection *m_connection;
+        DbController *m_dbController;
         //keep copy of connection's settings???
 };
 

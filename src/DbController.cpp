@@ -60,7 +60,7 @@ bool DbController::auth( const QByteArray &nick, const QByteArray &password, con
                       "' and password='"
                       + password +
                       "';" ) ) {
-        qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );//, qPrintable( query.lastError() ) );
+        qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );
         close();
         return false;
     }
