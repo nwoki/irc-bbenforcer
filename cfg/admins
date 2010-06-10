@@ -1,0 +1,8 @@
+#set your admins here. Must add the admin index for every new admin you insert
+#must be like the examples
+[OPLIST]
+1/nick=admin1
+1/password=admin1pass
+2/nick=admin2
+2/password=admin2pass
+size=2
