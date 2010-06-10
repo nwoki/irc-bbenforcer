@@ -137,33 +137,45 @@ void Connection::disconnectNotify()
 
 void Connection::handleSocketErrors( QAbstractSocket::SocketError error )
 {
-    qWarning()<< "Connection::handleSocketErrors \e[1;31m ERR:" << m_socket->errorString() << "\e[0m";
     m_socket->disconnectFromHost(); // or "abort()"?
 
     switch ( error ) {
         case QAbstractSocket::ConnectionRefusedError: {
-            std::cout << "\e[0;33m reconnecting..\e[0m" << std::endl;
-            QTimer::singleShot( 5000, this, SLOT( reconnect() ) );
+                qWarning() << "\e[0;33m" << m_socket->errorString() << ", trying to reconnect..\e[0m";
+            QTimer::singleShot( 3000, this, SLOT( reconnect() ) );
             //what to do?
             break;
         }
         case QAbstractSocket::RemoteHostClosedError: {
-            //host closed connection
-                //reconnect
+            qWarning() << "\e[0;33m" << m_socket->errorString() << ", trying to reconnect..\e[0m";
+            reconnect();
             break;
         }
         case QAbstractSocket::HostNotFoundError: {
-            std::cout << "\e[0;33m Please control your config file and check that all values have been inserted correctly\e[0m" << std::endl;
+            qWarning() << "\e[0;33m" << m_socket->errorString() << " Please control your config file and check that all values have been inserted correctly\e[0m";
+            exit( -1 ); //terminate program
             break;
         }
         case QAbstractSocket::SocketAccessError: {
-            std::cout << "\e[0;33 The application lacks the required privileges\e[0m" << std::endl;
+            qWarning() << "\e[0;33" << m_socket->errorString() << " The application lacks the required privileges\e[0m";
+            exit( -1 );
             break;
         }
         case QAbstractSocket::SocketTimeoutError: {
-            std::cout << "\e[0;33 reconnecting.." << std::endl;
+            qWarning() << "\e[0;33m" << m_socket->errorString() << ", trying to reconnect....\e[0m" ;
+            reconnect();
+#warning FIX ME crashes when i get this error and try to reconnect.
             break;
         }
+        case QAbstractSocket::DatagramTooLargeError: {
+            qWarning() << "\e[0;33m" << m_socket->errorString() << "\e[0m";
+            break;
+        }
+        default: {
+            qWarning() << "\e[0;33m Following error is not handled -> " << m_socket->errorString();
+            break;
+        }
+
     }
 }
 

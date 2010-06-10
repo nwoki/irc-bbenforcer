@@ -55,5 +55,5 @@ void Brain::parseData()
     qDebug("Brain::parseData");
 
     while( m_ircControl->connectionSocket()->bytesAvailable() )
-        qDebug() << m_ircControl->connectionSocket()->readLine(200);
+        qDebug() << m_ircControl->connectionSocket()->readLine( 200 );
 }
