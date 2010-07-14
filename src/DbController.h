@@ -29,7 +29,7 @@ class DbController : public QSqlDatabase
         DbController();
         ~DbController();
 
-        bool auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );    //check database and return result for auth
+        bool auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );  /*!< auth's client to the bot giving admin priviledges */    //check database and return result for auth
 
     private:
         void addToAuthed( const QByteArray &nick, const QByteArray &ip );

@@ -48,9 +48,12 @@ bool DbController::auth( const QByteArray &nick, const QByteArray &password, con
     }
 
     //check to see if user is already authed
-    //TODO -> isAuthed
-#warning TODO isAuthed()
-    //
+    if( isAuthed( nick, ip ) ) {
+        qDebug() << nick << " IS ALREADY AUTHED!!";
+        return false;
+    }
+
+    qDebug() << nick << " IS NOT AUTHED!!";
 
     QSqlQuery query;
     if( !query.exec( "select * "
@@ -66,7 +69,7 @@ bool DbController::auth( const QByteArray &nick, const QByteArray &password, con
     }
 
     if( !query.next() ) {   //not on auth database
-        qWarning( "\e[0;33mDbController::auth %s is not on oplist", qPrintable ( QString( nick ) ) );
+        qWarning( "\e[0;33mDbController::auth %s is not on oplist\e[0m", qPrintable ( QString( nick ) ) );
         return false;
     }
 
@@ -83,7 +86,7 @@ bool DbController::auth( const QByteArray &nick, const QByteArray &password, con
 void DbController::addToAuthed( const QByteArray &nick, const QByteArray &ip )
 {
     qDebug( "DbController::addToAuthed" );
-    if( !isOpen() ) {   //open database
+    if( !isOpen() ) {   //check is db is open
         if( !open() ) {
             qWarning( "\e[1;31mDbController::addToAuthed can't open database\e[0m" );
             return;
@@ -130,9 +133,24 @@ void DbController::createDatabaseFirstRun()
 
 bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
 {
+    qDebug( "DbController::isAuthed" );
+    if( !isOpen() ) {   //check is db is open
+        if( !open() ) {
+            qWarning( "\e[1;31mDbController::isAuthed can't open database\e[0m" );
+            return false;
+        }
+    }
 
+    QSqlQuery query( "select nick from authed "
+                     "where nick ='" + nick + "' "
+                     "and ip='" + ip + "';" );
 
-
+    if( query.next() )  //found match
+        //qDebug() << "HAS NEXT -> " << query.value( 0 ).toString();
+        return true;
+    else    //no match found
+        //qDebug() << "NO NEXT -> " << query.value( 0 ).toString();
+        return false;
 }
 
 void DbController::loadAdmins()
@@ -166,7 +184,7 @@ void DbController::loadAdmins()
                     + auxNick + "';" ) ) {
 
 #warning fix this, doesn't load admins DbController::loadAdmins();
-#warning is fixed. If there are problems, check here
+#warning seems like this ( DbController::loadAdmins )is fixed. If there are problems, check here
 
             if( query.next() )
                 qWarning( "\e[0;33m%s already in database\e[0m", qPrintable( auxNick ) );
@@ -200,7 +218,7 @@ void DbController::setup()
         }
     }
 
-    //check if config file exists!    ( extra control, who knows what stupid users can do ;)  )
+    //check if config file exists! ( extra control, who knows what stupid users can do ;)  )
     if( !QFile::exists( settingsFile ) ) {
         qWarning( "\e[1;31m DbController::setup FAIL , can't find settings file!\e[0m" );
         return;

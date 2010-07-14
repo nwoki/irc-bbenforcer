@@ -33,12 +33,12 @@ class Brain : public QObject
         Brain();
         ~Brain();
 
-        QByteArray extractIp( const QByteArray &text );
-        QByteArray extractText( const QByteArray &text );
-        QByteArray extractUser( const QByteArray &text );
+        QByteArray extractIp( const QByteArray &text ); /*!< get's ip of client */
+        QByteArray extractText( const QByteArray &text );   /*!< extracts text sent by client */
+        QByteArray extractUser( const QByteArray &text );   /*!< extracts user from message */
 
     public slots:
-        void parseData();
+        void parseData();   /*!< parses data sent from server to bot */
 
     private:
         //DbController *m_dbControl;    don't need this. Game and irc got pointer to it

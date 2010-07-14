@@ -1,7 +1,7 @@
 [IRC]
 ip=irc.quakenet.org
 port=6667
-chan=#test
+chan=#testtest
 nick=ioQIC_bot
 
 [GAMESERVER]

@@ -90,9 +90,9 @@ void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &
             return;
         }
         else {
-            if( !m_dbController->auth( user, aux.at( 1 )/* <- password*/, ip ) ) {
+            if( !m_dbController->auth( user, aux.at( 1 )/*<- password*/, ip ) ) {
                 //not authed
-                connectionSocket()->write( genPrivateMessage( user, "NOT AUTHED!Either you used the wrong password or you're not on my database" ) );
+                connectionSocket()->write( genPrivateMessage( user, "NOT AUTHED!wrong nick/pass or you're already authed" ) );
                 return;
             }
             //been authed
