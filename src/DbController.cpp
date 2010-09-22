@@ -36,71 +36,78 @@ DbController::~DbController()
     qDebug( "DbController::~DbController" );
 }
 
-bool DbController::auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip )
+DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip )
 {
+    /*
+     * need to handle enum DATABASE_ERROR
+     */
     qDebug( "DbController::auth" );
 
     if( !isOpen() ) { //open connection to database
         if( !open() ) {
             qWarning( "\e[1;31mDbController::auth can't open database\e[0m" );
-            return false;
+            return DATABASE_ERROR;
         }
     }
 
-    //check to see if user is already authed
+    /* check to see if user is already authed */
     if( isAuthed( nick, ip ) ) {
         qDebug() << nick << " IS ALREADY AUTHED!!";
-        return false;
+        return ALREADY_AUTHED;   /* don't need to auth again */
     }
 
     qDebug() << nick << " IS NOT AUTHED!!";
 
     QSqlQuery query;
-    if( !query.exec( "select * "
-                      "from oplist "
-                      "where nick='"
-                      + nick +
-                      "' and password='"
-                      + password +
-                      "';" ) ) {
+    if( !query.exec( "select * from oplist where nick='" + nick + "' and password='" + password + "';" ) ) {    /* query failed */
         qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );
         close();
-        return false;
+        return DATABASE_ERROR;
     }
 
-    if( !query.next() ) {   //not on auth database
+    if( !query.next() ) {   /* not on auth database */
         qWarning( "\e[0;33mDbController::auth %s is not on oplist\e[0m", qPrintable ( QString( nick ) ) );
-        return false;
+        return AUTH_FAIL;
     }
 
-    //add to authed table
-    addToAuthed( nick, ip );
-    close();
-    return true;
+    if( addToAuthed( nick, ip ) ) {    /* add to authed table */
+        close();
+        return AUTH_OK;
+    }
+    else{
+        close();
+        return DATABASE_ERROR;
+    }
+
+
+
 }
 
 /*******************************
 *      PRIVATE FUNCTIONS       *
 ********************************/
 
-void DbController::addToAuthed( const QByteArray &nick, const QByteArray &ip )
+bool DbController::addToAuthed( const QByteArray &nick, const QByteArray &ip )
 {
     qDebug( "DbController::addToAuthed" );
     if( !isOpen() ) {   //check is db is open
         if( !open() ) {
             qWarning( "\e[1;31mDbController::addToAuthed can't open database\e[0m" );
-            return;
+            return false;
         }
     }
 
     QSqlQuery query;
-    //Insert Into TableName (FieldName1, FieldName2) Values (Value1, Value2);
+
     if( !query.exec( "insert into authed( nick, ip ) values ('" + nick + "', '" + ip + "');" ) ) {
         qWarning( "\e[1;31mDbController::addToAuthed can't add user to authed table\e[0m" );
         close();
-        return;
+        return false;
     }
-    else qDebug("added");
+    else {
+        qDebug("added");
+        return true;
+    }
 }
 
 void DbController::createDatabaseFirstRun()

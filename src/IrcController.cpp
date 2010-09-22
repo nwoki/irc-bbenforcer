@@ -43,62 +43,16 @@ QAbstractSocket *IrcController::connectionSocket()
     return m_connection->socket();
 }
 
-void IrcController::logIn()
-{
-    //get settings
-    QMap< QString, QString > data = m_connection->ircSettings();
-    QString nick = data.value( "nick" );
-
-    //nick
-    QByteArray byteNick( "NICK " );
-    byteNick.append( nick + end );
-
-    //user
-    QByteArray byteUser( "USER " );
-    byteUser.append( nick + " " + nick + " " + nick + " " + nick + " : " + nick + end );
-
-    //join request
-    QByteArray byteJoin( "JOIN " );
-    byteJoin.append( data.value( "chan" ) + end );
-
-
-    qDebug() << byteNick;
-    qDebug() << byteUser;
-    qDebug() << byteJoin;
-
-    connectionSocket()->write( byteNick );
-    connectionSocket()->write( byteUser );
-    connectionSocket()->write( byteJoin );
-}
 
 void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
 {
     qDebug() << "MESSAGE I GET IS -> " << msg;
-    //help
-    if( msg.contains( "!help" ) ) {
-        //print help
-        //connectionSocket()->write(
-        qDebug( "IrcController::ircCommandParser::help NEED TO IMPLEMENT" );
-    }
 
-    //auth user
-    else if( msg.contains( "!auth" ) ) {    //!auth <password>
-        QList< QByteArray >aux = msg.split( ' ' );
+    if( msg.contains( "!help" ) )   /* print help */
+        help();
 
-        if( aux.size() > 2 ) {
-            connectionSocket()->write( genPrivateMessage( user, "too many parameters. send me-> '!auth <password>'" ) );
-            return;
-        }
-        else {
-            if( !m_dbController->auth( user, aux.at( 1 )/*<- password*/, ip ) ) {
-                //not authed
-                connectionSocket()->write( genPrivateMessage( user, "NOT AUTHED!wrong nick/pass or you're already authed" ) );
-                return;
-            }
-            //been authed
-            connectionSocket()->write( genPrivateMessage( user, "you have been authenticated to ioQIC " ) );
-        }
-    }
+    else if( msg.contains( "!auth" ) )   /* auth user ( !auth <password> ) */
+        auth( user, msg, ip );
 
     //kick
     //TODO fix kick reason. if given " asdasasd asd asd" it kick with "asd" as only reason
@@ -125,6 +79,37 @@ void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &
     }
 }
 
+
+void IrcController::logIn()
+{
+    qDebug( "IrcController::logIn" );
+    //get settings
+    QMap< QString, QString > data = m_connection->ircSettings();
+    QString nick = data.value( "nick" );
+
+    //nick
+    QByteArray byteNick( "NICK " );
+    byteNick.append( nick + end );
+
+    //user
+    QByteArray byteUser( "USER " );
+    byteUser.append( nick + " " + nick + " " + nick + " " + nick + " : " + nick + end );
+
+    //join request
+    QByteArray byteJoin( "JOIN " );
+    byteJoin.append( data.value( "chan" ) + end );
+
+
+    qDebug() << byteNick;
+    qDebug() << byteUser;
+    qDebug() << byteJoin;
+
+    connectionSocket()->write( byteNick );
+    connectionSocket()->write( byteUser );
+    connectionSocket()->write( byteJoin );
+}
+
+
 void IrcController::pong( const QByteArray &pingData )
 {
     QList<QByteArray>pingSplit = pingData.split( ':' );
@@ -135,14 +120,68 @@ void IrcController::pong( const QByteArray &pingData )
 *      PRIVATE FUNCTIONS       *
 ********************************/
 
-bool IrcController::auth( const QByteArray &user, const QByteArray &password )
+////////////////////////////////////
+//         IRC FUNCTIONS          //
+////////////////////////////////////
+void IrcController::auth( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
 {
-    //call database and do query
-    qDebug( "\e[1;31mIrcController::auth NEED TO IMPLEMENT\e[0m" );
-    return false;
+    QList< QByteArray >aux = msg.split( ' ' );
+
+    if( aux.size() > 2 ) {  /* too many parameters, abort */
+        connectionSocket()->write( genPrivateMessage( user, "too many parameters. send me-> '!auth <password>'" ) );
+        return;
+    }
+    else {
+        DbController::authMsg response;
+
+        response = m_dbController->auth( user, aux.at( 1 )/*<- password*/, ip );
+
+        if( response == DbController::ALREADY_AUTHED )
+            connectionSocket()->write( genPrivateMessage( user, "you're already authed!" ) );
+        else if( response == DbController::AUTH_FAIL )
+            connectionSocket()->write( genPrivateMessage( user, "NOT AUTHED! wrong username/password" ) );
+        else if( response == DbController::AUTH_OK )
+            connectionSocket()->write( genPrivateMessage( user, "you have been authenticated to ioQIC " ) );
+    }
 }
 
-bool IrcController::checkIfAuthed( const QByteArray &nick )
+void IrcController::flood( const QByteArray &nick, const QByteArray &message )
+{
+//    if( !isAuthed() ) {
+//        //fail return message
+//    }
+//    else{
+//        /*
+//          go on
+//          */
+//    }
+}
+
+
+void IrcController::help()
+{
+    qDebug( "IrcController::ircCommandParser::help NEED TO IMPLEMENT" );
+}
+
+
+void IrcController::kick( const QByteArray &nick, const QByteArray &reason )
+{
+
+    QByteArray aux( "KICK " );
+    QMap< QString, QString > auxSettings = m_connection->ircSettings();
+    aux.append( auxSettings.value( "chan" ) + " " + nick + " " + reason.trimmed() + end );
+    qDebug() << "AUX IS: " << aux;
+    connectionSocket()->write( aux );
+}
+
+
+
+////////////////////////////////////
+//         BOT FUNCTIONS          //
+////////////////////////////////////
+
+
+bool IrcController::isAuthed( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
 {
     //check authed table
     qDebug( "\e[1;31mIrcController::checkIfAuthed NOT IMPLEMENTED YET\e[0m" );
@@ -162,13 +201,4 @@ QByteArray IrcController::genPrivateMessage( const QByteArray &nick, const QByte
     QByteArray aux( "PRIVMSG " );
     aux.append( nick + " :" + messageToSend.trimmed() + end );
     return aux;
-}
-
-void IrcController::kick( const QByteArray &nick, const QByteArray &reason )
-{
-    QByteArray aux( "KICK " );
-    QMap< QString, QString > auxSettings = m_connection->ircSettings();
-    aux.append( auxSettings.value( "chan" ) + " " + nick + " " + reason.trimmed() + end );
-    qDebug() << "AUX IS: " << aux;
-    connectionSocket()->write( aux );
 }

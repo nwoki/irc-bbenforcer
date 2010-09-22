@@ -84,45 +84,38 @@ void Brain::parseData()
         QByteArray serverText = m_ircControl->connectionSocket()->readLine( 2000 );
         qDebug() << serverText;
 
-        //start sending info to login and join
-        if( serverText.contains( "NOTICE AUTH :*** Found your hostname" ) ) {
+        if( serverText.contains( "NOTICE AUTH :*** Found your hostname" ) ) {   /* start sending info to login and join */
             m_ircControl->logIn();
             return;
         }
 
-        //extra login send to make sure i get in channel
-        else if( serverText.contains( "NOTICE AUTH :*** No ident response" ) ) {
+        else if( serverText.contains( "NOTICE AUTH :*** No ident response" ) ) {    /* extra login send to make sure i get in channel */
             m_ircControl->logIn();
             return;
         }
 
-        //send back ping data
-        else if( serverText.contains( "PING" ) ) {
+        else if( serverText.contains( "PING" ) ) {  /* send back ping data */
             m_ircControl->pong( serverText );
             return;
         }
 
-        //control this after i get the "end of" line from server
-        else if( serverText.contains( "PRIVMSG" ) ) {
-            //someone's talking
+        // control this after i get the "end of" line from server
+        else if( serverText.contains( "PRIVMSG" ) ) {   /* someone's talking */
             QByteArray user = extractUser( serverText );
             QByteArray msg = extractText( serverText );
             QByteArray ip = extractIp( serverText );
 
-            //irc command is "!"
-            if( msg.startsWith( '!' ) ) {
+            if( msg.startsWith( '!' ) ) {   /* irc command is "!" */
                 qDebug() << user << " ASKED FOR IRC BOT COMMAND with :" << msg;
                 m_ircControl->ircCommandParser( user, msg, ip );
             }
 
-            //game server command is "@"
-            else if( msg.startsWith( '@' ) ) {
+            else if( msg.startsWith( '@' ) ) {  /* game server command is "@" */
                 qDebug() << user << " ASKED FOR GAME BOT COMMAND with :" << msg;
                 qDebug( "\e[1;31mBrain::parseData game server command -> need to implement! \e[0m" );
             }
 
-            //nothing, normal msg
-            else
+            else    /* nothing, normal msg */
                 qDebug() << user << " SENT NORMAL MESSAGE.LOG IT!";
         }
     }

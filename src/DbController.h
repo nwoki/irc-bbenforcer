@@ -25,19 +25,26 @@ class QSettings;
 
 class DbController : public QSqlDatabase
 {
-    public:
-        DbController();
-        ~DbController();
+public:
+    enum authMsg {
+        ALREADY_AUTHED, /* already authed */
+        AUTH_OK,        /* auth procedure went well */
+        AUTH_FAIL,      /* auth procedure failed( wrong username or password ) */
+        DATABASE_ERROR  /* still need to handle this one */
+    };
 
-        bool auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );  /*!< auth's client to the bot giving admin priviledges */    //check database and return result for auth
+    DbController();
+    ~DbController();
 
-    private:
-        void addToAuthed( const QByteArray &nick, const QByteArray &ip );
-        void createDatabaseFirstRun();  //creates authed and oplist tables
-        bool isAuthed( const QByteArray &nick, const QByteArray &ip );
-        void loadAdmins();  //loads admins to oplist table
-        void setup();   //setup the database
-//        void populateDatabase();
+    authMsg auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );  /*!< auth's client to the bot giving admin priviledges */
+
+private:
+    bool addToAuthed( const QByteArray &nick, const QByteArray &ip );
+    void createDatabaseFirstRun();  /* creates authed and oplist tables */
+    bool isAuthed( const QByteArray &nick, const QByteArray &ip );
+    void loadAdmins();  //loads admins to oplist table
+    void setup();   //setup the database
+//    void populateDatabase();
 };
 
 #endif // DBCONTROLLER_H

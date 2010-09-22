@@ -32,17 +32,27 @@ class IrcController : public QObject
         IrcController( DbController *db );
         ~IrcController();
 
-        QAbstractSocket *connectionSocket();  //returns socket in 'connection'
-        void logIn();
-        void ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
-        void pong( const QByteArray &pingData );
+        QAbstractSocket *connectionSocket();  /* returns socket in 'connection' */
+        void ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );   /* parse irc commands given to the bot */
+        void logIn();   /* log into server ( bot ) */
+        void pong( const QByteArray &pingData );    /* respond to ping request from irc server */
 
     private:
-        bool auth( const QByteArray &user, const QByteArray &password );
-        bool checkIfAuthed( const QByteArray &nick );
+        /****************
+        * irc functions *
+        ****************/
+        void auth( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );  /* auth user */
+        void flood( const QByteArray &nick, const QByteArray &message );    /* flood client with message */
+        void help();    /* print help message ( or send help file? )*/
+        void kick( const QByteArray &nick, const QByteArray &reason );  /* kick client */
+
+        /****************
+        * bot functions *
+        ****************/
+        bool isAuthed( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
         QByteArray genChannelMessage( const QByteArray &messageToSend );
         QByteArray genPrivateMessage( const QByteArray &nick, const QByteArray &messageToSend );
-        void kick( const QByteArray &nick, const QByteArray &reason );
+
 
 
         Connection *m_connection;
