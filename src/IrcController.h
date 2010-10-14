@@ -28,36 +28,36 @@ class QAbstractSocket;
 class IrcController : public QObject
 {
     Q_OBJECT
-    public:
-        IrcController( DbController *db );
-        ~IrcController();
+public:
+    IrcController( DbController *db );
+    ~IrcController();
 
-        QAbstractSocket *connectionSocket();  /* returns socket in 'connection' */
-        void ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );   /* parse irc commands given to the bot */
-        void logIn();   /* log into server ( bot ) */
-        void pong( const QByteArray &pingData );    /* respond to ping request from irc server */
+    QAbstractSocket *connectionSocket();  /* returns socket in 'connection' */
+    void ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );   /* parse irc commands given to the bot */
+    void logIn();   /* log into server ( bot ) */
+    void pong( const QByteArray &pingData );    /* respond to ping request from irc server */
 
-    private:
-        /****************
-        * irc functions *
-        ****************/
-        void auth( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );  /* auth user */
-        void flood( const QByteArray &nick, const QByteArray &message );    /* flood client with message */
-        void help();    /* print help message ( or send help file? )*/
-        void kick( const QByteArray &nick, const QByteArray &reason );  /* kick client */
+private:
+    /****************
+    * irc functions *
+    ****************/
+    void auth( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );  /* auth user */
+    void flood( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );    /* flood client with message */
+    void help( const QByteArray &user );    /* print help message ( or send help file? )*/
+    void kick( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );  /* kick client */
 
-        /****************
-        * bot functions *
-        ****************/
-        bool isAuthed( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
-        QByteArray genChannelMessage( const QByteArray &messageToSend );
-        QByteArray genPrivateMessage( const QByteArray &nick, const QByteArray &messageToSend );
+    /****************
+    * bot functions *
+    ****************/
+    bool isAuthed( const QByteArray &user, const QByteArray &ip );
+    QByteArray genChannelMessage( const QByteArray &messageToSend );
+    QByteArray genPrivateMessage( const QByteArray &nick, const QByteArray &messageToSend );
+    void sendPrivateMessage( const QByteArray &nick, const QByteArray &message );   /* send PVT message to nick */
 
 
-
-        Connection *m_connection;
-        DbController *m_dbController;
-        //keep copy of connection's settings???
+    Connection *m_connection;
+    DbController *m_dbController;
+    //keep copy of connection's settings???
 };
 
 #endif // IRCCONTROLLER_H

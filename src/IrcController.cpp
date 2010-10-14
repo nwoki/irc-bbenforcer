@@ -21,6 +21,7 @@
 #include "DbController.h"
 
 #include <QAbstractSocket>
+#include <QTimer>
 
 #define end "\r\n"
 
@@ -49,34 +50,15 @@ void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &
     qDebug() << "MESSAGE I GET IS -> " << msg;
 
     if( msg.contains( "!help" ) )   /* print help */
-        help();
+        help( user );
 
     else if( msg.contains( "!auth" ) )   /* auth user ( !auth <password> ) */
         auth( user, msg, ip );
 
     //kick
     //TODO fix kick reason. if given " asdasasd asd asd" it kick with "asd" as only reason
-    else if( msg.contains( "!kick" ) ) {    //!kick <nick> <reason>
-        QList< QByteArray >aux = msg.split( ' ' );
-
-        if( aux.size() == 1 ) { //too few arguments
-            connectionSocket()->write( genPrivateMessage( user, "too few arguments. '!kick <nick> <reason>'" ) );
-            return;
-        }
-
-        QByteArray reason( "kick" );
-        if( aux.size() >= 3 ) { //got reason!
-            reason.clear();
-            for( int i = 2; i < aux.size(); i++ ) {
-                reason.append( aux.at( i ) );//+ " " ); put " " in front??
-                reason.append( " " );
-                qDebug() << "REASON = " << reason;
-            }
-        }
-        //send kick
-        qDebug() << "sending kick command-> " << reason;
-        kick( aux.at( 1 ), reason );
-    }
+    else if( msg.contains( "!kick" ) )    /* !kick <nick> <reason> */
+        kick( user, msg, ip );
 }
 
 
@@ -120,15 +102,15 @@ void IrcController::pong( const QByteArray &pingData )
 *      PRIVATE FUNCTIONS       *
 ********************************/
 
-////////////////////////////////////
-//         IRC FUNCTIONS          //
-////////////////////////////////////
+/***********************************
+**         IRC FUNCTIONS          **
+***********************************/
 void IrcController::auth( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
 {
     QList< QByteArray >aux = msg.split( ' ' );
 
     if( aux.size() > 2 ) {  /* too many parameters, abort */
-        connectionSocket()->write( genPrivateMessage( user, "too many parameters. send me-> '!auth <password>'" ) );
+        sendPrivateMessage( user, "too many parameters. send me-> '!auth <password>'" );
         return;
     }
     else {
@@ -137,55 +119,82 @@ void IrcController::auth( const QByteArray &user, const QByteArray &msg, const Q
         response = m_dbController->auth( user, aux.at( 1 )/*<- password*/, ip );
 
         if( response == DbController::ALREADY_AUTHED )
-            connectionSocket()->write( genPrivateMessage( user, "you're already authed!" ) );
+            sendPrivateMessage( user, "you're already authed!" );
         else if( response == DbController::AUTH_FAIL )
-            connectionSocket()->write( genPrivateMessage( user, "NOT AUTHED! wrong username/password" ) );
+            sendPrivateMessage( user, "NOT AUTHED! wrong username/password" );
         else if( response == DbController::AUTH_OK )
-            connectionSocket()->write( genPrivateMessage( user, "you have been authenticated to ioQIC " ) );
+            sendPrivateMessage( user, "you have been authenticated to ioQIC");
+        else
+            sendPrivateMessage( user, "problem with database, please contact an administrator" );
     }
 }
 
-void IrcController::flood( const QByteArray &nick, const QByteArray &message )
+void IrcController::flood( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
 {
-//    if( !isAuthed() ) {
-//        //fail return message
-//    }
-//    else{
-//        /*
-//          go on
-//          */
-//    }
+    if( !isAuthed( user, ip ) ) { /* not authed */
+        sendPrivateMessage( user, "you're not authed to ioQIC" );
+        return;
+    }
+
 }
 
 
-void IrcController::help()
+void IrcController::help( const QByteArray &user )
 {
     qDebug( "IrcController::ircCommandParser::help NEED TO IMPLEMENT" );
+    /*
+     * single shot here
+     */
+//    QTimer::singleShot( 500, m_connection, sendPrivateMessage( user, "sei un gay" ) );
 }
 
 
-void IrcController::kick( const QByteArray &nick, const QByteArray &reason )
+void IrcController::kick( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
 {
+    if( !isAuthed( user, ip ) ) {   /* not authed */
+        sendPrivateMessage( user, "you're not authed to ioQIC" );
+        return;
+    }
 
-    QByteArray aux( "KICK " );
+    QList< QByteArray >aux = msg.split( ' ' );
+
+    if( aux.size() == 1 ) { // too few arguments
+        sendPrivateMessage( user, "too few arguments. '!kick <nick> <reason>'" );
+        return;
+    }
+
+    QByteArray reason( "kick" );    // this is for default in case no reason is specified
+    if( aux.size() >= 3 ) {         // got reason!
+        reason.clear();
+        for( int i = 2; i < aux.size(); i++ ) {
+            reason.append( aux.at( i ) );   //+ " " ); put " " in front??
+            reason.append( " " );
+            qDebug() << "REASON = " << reason;
+        }
+    }
+    // send kick
+    qDebug() << "sending kick command-> " << reason;
+
+    #warning TODO fix reason on kick, sends only last word from a phrase
+
+    QByteArray cmd( "KICK " );
     QMap< QString, QString > auxSettings = m_connection->ircSettings();
-    aux.append( auxSettings.value( "chan" ) + " " + nick + " " + reason.trimmed() + end );
-    qDebug() << "AUX IS: " << aux;
-    connectionSocket()->write( aux );
+
+    cmd.append( auxSettings.value( "chan" ) + " " + /*nick*/aux.at( 1 ) + " " + reason.trimmed() + end );
+    qDebug() << "command to send IS: " << cmd;
+    connectionSocket()->write( cmd );
 }
 
 
 
-////////////////////////////////////
-//         BOT FUNCTIONS          //
-////////////////////////////////////
+/***********************************
+**         BOT FUNCTIONS          **
+***********************************/
 
 
-bool IrcController::isAuthed( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
+bool IrcController::isAuthed( const QByteArray &user, const QByteArray &ip )
 {
-    //check authed table
-    qDebug( "\e[1;31mIrcController::checkIfAuthed NOT IMPLEMENTED YET\e[0m" );
-    return false;
+    return m_dbController->isAuthed( user, ip );
 }
 
 QByteArray IrcController::genChannelMessage( const QByteArray &messageToSend )
@@ -201,4 +210,9 @@ QByteArray IrcController::genPrivateMessage( const QByteArray &nick, const QByte
     QByteArray aux( "PRIVMSG " );
     aux.append( nick + " :" + messageToSend.trimmed() + end );
     return aux;
+}
+
+void IrcController::sendPrivateMessage( const QByteArray &nick, const QByteArray &message )
+{
+    connectionSocket()->write( genPrivateMessage( nick, message ) );
 }

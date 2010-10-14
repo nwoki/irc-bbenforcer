@@ -37,11 +37,11 @@ public:
     ~DbController();
 
     authMsg auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );  /*!< auth's client to the bot giving admin priviledges */
+    bool isAuthed( const QByteArray &nick, const QByteArray &ip );
 
 private:
     bool addToAuthed( const QByteArray &nick, const QByteArray &ip );
     void createDatabaseFirstRun();  /* creates authed and oplist tables */
-    bool isAuthed( const QByteArray &nick, const QByteArray &ip );
     void loadAdmins();  //loads admins to oplist table
     void setup();   //setup the database
 //    void populateDatabase();

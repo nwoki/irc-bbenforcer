@@ -29,21 +29,21 @@ class QByteArray;
 class Brain : public QObject
 {
     Q_OBJECT
-    public:
-        Brain();
-        ~Brain();
+public:
+    Brain();
+    ~Brain();
 
-        QByteArray extractIp( const QByteArray &text );     /*!< get's ip of client */
-        QByteArray extractText( const QByteArray &text );   /*!< extracts text sent by client */
-        QByteArray extractUser( const QByteArray &text );   /*!< extracts user from message */
+    QByteArray extractIp( const QByteArray &text );     /*!< get's ip of client */
+    QByteArray extractText( const QByteArray &text );   /*!< extracts text sent by client */
+    QByteArray extractUser( const QByteArray &text );   /*!< extracts user from message */
 
-    public slots:
-        void parseData();   /*!< parses data sent from server to bot */
+public slots:
+    void parseData();   /*!< parses data sent from server to bot */
 
-    private:
-        //DbController *m_dbControl;    don't need this. Game and irc got pointer to it
-        GameController *m_gameControl;
-        IrcController *m_ircControl;
+private:
+    //DbController *m_dbControl;    don't need this. Game and irc got pointer to it
+    GameController *m_gameControl;
+    IrcController *m_ircControl;
 };
 
 #endif // BRAIN_H

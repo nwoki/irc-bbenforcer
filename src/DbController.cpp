@@ -166,7 +166,7 @@ void DbController::loadAdmins()
 
     QSettings settings( adminFile, QSettings::IniFormat );
 
-    //open database for writing
+    // open database for writing
     if( !open() ) {
         qWarning( "\e[1;31mDbController::loadAdmins FAILED to open database. No admins loaded\e[0m" );
         return;
@@ -184,14 +184,11 @@ void DbController::loadAdmins()
 
         QSqlQuery query;
 
-        //check existance on database
-        if( query.exec( "select nick "
-                    "from oplist "
-                    "where nick = '"
-                    + auxNick + "';" ) ) {
+        // check existance on database
+        if( query.exec( "select nick from oplist where nick = '" + auxNick + "';" ) ) {
 
-#warning fix this, doesn't load admins DbController::loadAdmins();
-#warning seems like this ( DbController::loadAdmins )is fixed. If there are problems, check here
+            #warning fix this, doesn''t load admins DbController::loadAdmins();
+            #warning seems like this ( DbController::loadAdmins )is fixed. If there are problems, check here
 
             if( query.next() )
                 qWarning( "\e[0;33m%s already in database\e[0m", qPrintable( auxNick ) );

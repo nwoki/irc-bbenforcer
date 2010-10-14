@@ -26,26 +26,26 @@
 class Connection : public QObject
 {
     Q_OBJECT
-    public:
-        Connection( QAbstractSocket::SocketType type );
-        ~Connection();
+public:
+    Connection( QAbstractSocket::SocketType type );
+    ~Connection();
 
-        QMap< QString, QString > ircSettings();
-        void startConnect();
-        QAbstractSocket *socket();  //returns the socket in use
+    QMap< QString, QString > ircSettings();
+    void startConnect();
+    QAbstractSocket *socket();  //returns the socket in use
 
-    public slots:
-        void connectNotify();
-        void disconnectNotify();
-        void handleSocketErrors( QAbstractSocket::SocketError );
-        void reconnect();
+public slots:
+    void connectNotify();
+    void disconnectNotify();
+    void handleSocketErrors( QAbstractSocket::SocketError );
+    void reconnect();
 
-    private:
-        void loadSettings();
+private:
+    void loadSettings();
 
-        int m_port;
-        QAbstractSocket *m_socket;
-        QString m_chan, m_ip, m_nick;
+    int m_port;
+    QAbstractSocket *m_socket;
+    QString m_chan, m_ip, m_nick;
 };
 
 #endif // CONNECTION_H
