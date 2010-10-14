@@ -119,22 +119,25 @@ void DbController::createDatabaseFirstRun()
     }
 
     QSqlQuery query;
-    //oplist table
+    // oplist table
     if ( !query.exec( "create table oplist("
-                         //"id INTEGER PRIMARY KEY,"  //auotoincrement need this??
+                         "id INTEGER PRIMARY KEY,"  // auotoincrement PK
                          "nick TEXT,"
                          "password TEXT);" ) ) {
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( oplist table )\e[0m" );
         return;
     }
 
+    // authed table
     if( !query.exec( "create table authed("
+                     "id INTEGER PRIMARY KEY,"      // autoincrement PK
                      "nick TEXT,"
                      "ip TEXT);" ) ) {
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( authed table )\e[0m" );
         return;
     }
-    //close database
+
+    // close database
     close();
 }
 
@@ -164,37 +167,38 @@ void DbController::loadAdmins()
 {
     qDebug( "DbController::loadAdmins" );
 
-    QSettings settings( adminFile, QSettings::IniFormat );
-
-    // open database for writing
-    if( !open() ) {
+    if( !open() ) { // open database for writing
         qWarning( "\e[1;31mDbController::loadAdmins FAILED to open database. No admins loaded\e[0m" );
         return;
     }
 
-    int size = settings.beginReadArray( "OPLIST" );
     QString auxNick, auxPassword;
+    QSettings settings( adminFile, QSettings::IniFormat );
+    int size = settings.beginReadArray( "OPLIST" ); // size of settings
 
     for( int i = 0; i < size; ++i ) {
+
+        // get admins from config file
         settings.setArrayIndex( i );
         auxNick = settings.value( "nick" ).toString();
         auxPassword = settings.value( "password" ).toString();
-
-        qDebug() << "nick -> " << auxNick << "pass -> " << auxPassword;
 
         QSqlQuery query;
 
         // check existance on database
         if( query.exec( "select nick from oplist where nick = '" + auxNick + "';" ) ) {
 
-            #warning fix this, doesn''t load admins DbController::loadAdmins();
-            #warning seems like this ( DbController::loadAdmins )is fixed. If there are problems, check here
-
             if( query.next() )
                 qWarning( "\e[0;33m%s already in database\e[0m", qPrintable( auxNick ) );
-
             else {    //write to database
-                if( !query.exec( "insert into oplist values('" + auxNick + "','" + auxPassword + "');" ) ) {
+                qDebug( "\e[0;33mnick( %s ) is not on database..Adding now..\e[0m", qPrintable( auxNick ) );
+
+                int id = genNewId( OPLIST );
+
+                if( id == 0 )   // database error
+                    return;
+
+                if( !query.exec( "insert into oplist values('" + QString::number( id ) + "','" + auxNick + "','" + auxPassword + "');" ) ) {
                     qWarning() << "\e[1;31mDbController::loadAdmins FAILED to execute query" << query.lastError() << "\e[0m" ;
                     return;
                 }
@@ -205,6 +209,33 @@ void DbController::loadAdmins()
     }
     settings.endArray();
     close();
+}
+
+int DbController::genNewId( table t )
+{
+    QSqlQuery maxIdQuery;
+    QString query;
+
+    if( t == OPLIST )
+        query = "select max( id ) from oplist;";
+    else
+        query = "select max( id ) from authed;";
+
+    if( !maxIdQuery.exec( query ) ) {
+        qWarning() << "\e[1;31m didn't execute query " << maxIdQuery.lastError() ;
+        return 0;
+    }
+
+    bool ok;
+    int id;
+
+    maxIdQuery.next();   // got to record
+    id = maxIdQuery.value( 0 ).toInt( &ok );
+
+    if( !ok )
+        return 1;
+    else
+        return id+1;
 }
 
 void DbController::setup()

@@ -33,6 +33,11 @@ public:
         DATABASE_ERROR  /* still need to handle this one */
     };
 
+    enum table {
+        OPLIST,
+        AUTHED
+    };
+
     DbController();
     ~DbController();
 
@@ -40,10 +45,11 @@ public:
     bool isAuthed( const QByteArray &nick, const QByteArray &ip );
 
 private:
-    bool addToAuthed( const QByteArray &nick, const QByteArray &ip );
-    void createDatabaseFirstRun();  /* creates authed and oplist tables */
-    void loadAdmins();  //loads admins to oplist table
-    void setup();   //setup the database
+    bool addToAuthed( const QByteArray &nick, const QByteArray &ip );   // add client to auth
+    void createDatabaseFirstRun();                                      // creates authed and oplist tables
+    void loadAdmins();                                                  // loads admins to oplist table
+    int genNewId( table t );                                            // creates new id for insertion in oplist table ( DB MUST BE ALREADY OPEN! )
+    void setup();                                                       // setup the database
 //    void populateDatabase();
 };
 
