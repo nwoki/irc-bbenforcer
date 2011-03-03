@@ -2,7 +2,7 @@
 * ioQIC - Qt irc bot that also sends rcon commands to UrbanTerror game server          *
 * Copyright (C) 2010, woki                                                             *
 *                                                                                      *
-* Connection.h is part of ioQIC                                                        *
+* GameController.cpp is part of ioQIC                                                  *
 *                                                                                      *
 * ioQIC is free software: you can redistribute it and/or modify it under the           *
 * terms of the GNU General Public License as published by the Free Software Foundation,*
@@ -16,36 +16,23 @@
 * program.  If not, see <http://www.gnu.org/licenses/>.                                *
 ****************************************************************************************/
 
-#ifndef CONNECTION_H
-#define CONNECTION_H
+#include "connection.h"
+#include "dbcontroller.h"
+#include "gamecontroller.h"
 
 #include <QAbstractSocket>
-#include <QObject>
-#include <QString>
 
-class Connection : public QObject
+#define RCON_START "\xff\xff\xff\xffrcon"
+
+
+GameController::GameController( DbController *db )
+    : m_db( db )
+    , m_socket( new Connection( QAbstractSocket::UdpSocket ) )
 {
-    Q_OBJECT
-public:
-    Connection( QAbstractSocket::SocketType type );
-    ~Connection();
 
-    QMap< QString, QString > ircSettings();
-    void startConnect();
-    QAbstractSocket *socket();  //returns the socket in use
+}
 
-public slots:
-    void connectNotify();
-    void disconnectNotify();
-    void handleSocketErrors( QAbstractSocket::SocketError );
-    void reconnect();
-
-private:
-    void loadSettings();
-
-    int m_port;
-    QAbstractSocket *m_socket;
-    QString m_chan, m_ip, m_nick;
-};
-
-#endif // CONNECTION_H
+QAbstractSocket *GameController::connectionSocket() const
+{
+    return m_socket;
+}

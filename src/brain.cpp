@@ -16,10 +16,10 @@
 * program.  If not, see <http://www.gnu.org/licenses/>.                                *
 ****************************************************************************************/
 
-#include "Brain.h"
-#include "DbController.h"
-#include "GameController.h"
-#include "IrcController.h"
+#include "brain.h"
+#include "dbcontroller.h"
+#include "gamecontroller.h"
+#include "irccontroller.h"
 
 #include <QAbstractSocket>
 #include <QDebug>
@@ -29,22 +29,21 @@ Brain::Brain()
     : m_gameControl( 0 )
     , m_ircControl( 0 )
 {
-    qDebug("Brain::Brain");
-    //m_dbControl = new DbController(); i don't need it on brain
-    //m_gameControl TODO
-    //create pointer to pass to irc Controller and GameController
+    qDebug( "Brain::Brain" );
+    //m_dbControl = new DbController(); i don't need it on brain for now
     DbController *db = new DbController();
 
     m_ircControl = new IrcController( db );
+//     m_gameControl = new GameController( db );
 
 
     //read from server when data is available
     connect( m_ircControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseData() ) );
-    //connect various object attributes
+//     connect( m_gameControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseData() ) );
 
     //delete local pointer to db, don't need it anymore
     db = 0;
-    delete db;
+//    delete db;
 }
 
 Brain::~Brain()
@@ -116,7 +115,7 @@ void Brain::parseData()
             }
 
             else    /* nothing, normal msg */
-                qDebug() << user << " SENT NORMAL MESSAGE.LOG IT!";
+                qDebug() << user << " SENT NORMAL MESSAGE.LOG IT SOMEWHERE!";
         }
     }
 }

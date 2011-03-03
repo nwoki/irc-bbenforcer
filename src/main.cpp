@@ -19,8 +19,8 @@
 #include <QtCore/QCoreApplication>
 #include <iostream>
 
-#include "Brain.h"
-#include "Connection.h"
+#include "brain.h"
+#include "connection.h"
 
 int main(int argc, char *argv[])
 {

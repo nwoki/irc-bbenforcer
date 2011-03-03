@@ -16,7 +16,7 @@
 * program.  If not, see <http://www.gnu.org/licenses/>.                                *
 ****************************************************************************************/
 
-#include "DbController.h"
+#include "dbcontroller.h"
 
 #include <QFile>
 #include <QSettings>
@@ -59,7 +59,9 @@ DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArr
     qDebug() << nick << " IS NOT AUTHED!!";
 
     QSqlQuery query;
-    if( !query.exec( "select * from oplist where nick='" + nick + "' and password='" + password + "';" ) ) {    /* query failed */
+    QString queryStr( "select * from oplist where nick='" + nick + "' and password='" + password + "';" );
+    if( !query.exec( queryStr ) ) {    /* query failed */
+        qDebug( "3" );
         qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );
         close();
         return DATABASE_ERROR;
@@ -78,9 +80,6 @@ DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArr
         close();
         return DATABASE_ERROR;
     }
-
-
-
 }
 
 /*******************************
@@ -155,6 +154,7 @@ bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
                      "where nick ='" + nick + "' "
                      "and ip='" + ip + "';" );
 
+    // use first
     if( query.next() )  //found match
         //qDebug() << "HAS NEXT -> " << query.value( 0 ).toString();
         return true;

@@ -16,7 +16,7 @@
 * program.  If not, see <http://www.gnu.org/licenses/>.                                *
 ****************************************************************************************/
 
-#include "Connection.h"
+#include "connection.h"
 
 #include <iostream>
 #include <QAbstractSocket>
@@ -27,23 +27,18 @@
 #include <QUdpSocket>
 
 Connection::Connection( QAbstractSocket::SocketType type )
-    : m_port( 0 )
-    , m_socket( 0 )
+    : QAbstractSocket( type, 0 )
+    , m_port( 0 )
     , m_chan( QString() )
     , m_ip( QString() )
     , m_nick( QString() )
+    , m_rconPass( QString() )
 {
-    if( type == QAbstractSocket::TcpSocket )
-        m_socket = new QTcpSocket();
-    else if( type == QAbstractSocket::UdpSocket )
-        m_socket = new QUdpSocket();
-
     loadSettings();
 }
 
 Connection::~Connection()
 {
-    delete m_socket;
 }
 
 QMap< QString, QString > Connection::ircSettings()
@@ -66,7 +61,10 @@ void Connection::loadSettings()
         return;
     }
 
-    if( m_socket->socketType() == QAbstractSocket::TcpSocket ) {    //load irc settings
+    /*
+     * IRC LOADER
+     */
+    if( socketType() == QAbstractSocket::TcpSocket ) {    //load irc settings
         qDebug( "Connection::loadSettings IRC SETTINGS" );
 
         settings.beginReadArray( "IRC" );
@@ -95,8 +93,34 @@ void Connection::loadSettings()
             qWarning( "\e[1;31mConnection::loadSettings can't load 'nick'. Check your config file\e[0m" );
             return;
         }
+        qDebug() << ircSettings();
     }
-    else if( m_socket->socketType() == QAbstractSocket::UdpSocket ) {   //load game settings
+
+    /*
+     * GAMESERVER LOADER
+     */
+    else if( socketType() == QAbstractSocket::UdpSocket ) {   //load game settings
+        qDebug( "Connection::loadSettings GAME SERVER SETTINGS" );
+
+        settings.beginReadArray( "GAMESERVER" );
+
+        m_ip = settings.value( "ip" ).toString();
+        if( m_ip.isEmpty() ) {
+            qWarning( "\e[1;31mConnection::loadSettings can't load 'ip'. Check your config file\e[0m" );
+            return;
+        }
+
+        bool ok;
+        m_port = settings.value( "port" ).toInt( &ok );
+        if( !ok ) {
+            qWarning( "\e[1;31mConnection::loadSettings can't load 'port'. Check your config file.\e[0m" );
+            return;
+        }
+
+        m_rconPass = settings.value( "rconPass" ).toString();
+
+        if( m_rconPass.isEmpty() )
+            qWarning( "\e[1;31mWARNING: empty rcon pass!" );
 
     }
     else {
@@ -107,33 +131,35 @@ void Connection::loadSettings()
     settings.endArray();
 }
 
-void Connection::startConnect()
+void Connection::startIrcConnect()
 {
-    qDebug( "Connection::startConnect");
-    if( !m_socket ) {
-        qWarning( "Connection::connect no socket initialized for connection" );
-        return;
-    }
+    qDebug( "Connection::startIrcConnect");
+//     if( !m_socket ) {
+//         qWarning( "Connection::connect no socket initialized for connection" );
+//         return;
+//     }
+
 
     //connection notification
-    connect( m_socket, SIGNAL( connected() ), this, SLOT( connectNotify() ) );
+    connect( this, SIGNAL( connected() ), this, SLOT( connectNotify() ) );
 
     //connection error
-    connect( m_socket, SIGNAL( error( QAbstractSocket::SocketError ) ), this, SLOT( handleSocketErrors( QAbstractSocket::SocketError ) ) );
+    connect( this, SIGNAL( error( QAbstractSocket::SocketError ) ), this, SLOT( handleSocketErrors( QAbstractSocket::SocketError ) ) );
 
     //disconnect notification
-    connect( m_socket, SIGNAL( disconnected() ), this, SLOT( disconnectNotify()) );
+    connect( this, SIGNAL( disconnected() ), this, SLOT( disconnectNotify()) );
 
-    m_socket->connectToHost( m_ip, m_port, QIODevice::ReadWrite );
+    connectToHost( m_ip, m_port, QIODevice::ReadWrite );
 }
 
-QAbstractSocket *Connection::socket()
+void Connection::startGameConnect()
 {
-    if( !m_socket ) {
-        qWarning( "Connection::socket no socket to return!" );
-        return 0;
-    }
-    else return m_socket;
+    qDebug( "Connection::startGameConnect" );
+//     if( !m_socket ) {
+//         qWarning( "Connection::connect no socket initialized for game connection" );
+//         return;
+//     }
+
 }
 
 
@@ -154,42 +180,43 @@ void Connection::disconnectNotify()
 
 void Connection::handleSocketErrors( QAbstractSocket::SocketError error )
 {
-    m_socket->disconnectFromHost(); // or "abort()"?
+    qDebug("AAAAAAAAAA");
+    disconnectFromHost(); // or "abort()"?
 
     switch ( error ) {
         case QAbstractSocket::ConnectionRefusedError: {
-                qWarning() << "\e[0;33m" << m_socket->errorString() << ", trying to reconnect..\e[0m";
+            qWarning() << "\e[0;33m" << errorString() << ", trying to reconnect..\e[0m";
             QTimer::singleShot( 3000, this, SLOT( reconnect() ) );
             //what to do?
             break;
         }
         case QAbstractSocket::RemoteHostClosedError: {
-            qWarning() << "\e[0;33m" << m_socket->errorString() << ", trying to reconnect..\e[0m";
+            qWarning() << "\e[0;33m" << errorString() << ", trying to reconnect..\e[0m";
             reconnect();
             break;
         }
         case QAbstractSocket::HostNotFoundError: {
-            qWarning() << "\e[0;33m" << m_socket->errorString() << " Please control your config file and check that all values have been inserted correctly\e[0m";
+            qWarning() << "\e[0;33m" << errorString() << " Please control your config file and check that all values have been inserted correctly\e[0m";
             exit( -1 ); //terminate program
             break;
         }
         case QAbstractSocket::SocketAccessError: {
-            qWarning() << "\e[0;33" << m_socket->errorString() << " The application lacks the required privileges\e[0m";
+            qWarning() << "\e[0;33" << errorString() << " The application lacks the required privileges\e[0m";
             exit( -1 );
             break;
         }
         case QAbstractSocket::SocketTimeoutError: {
-            qWarning() << "\e[0;33m" << m_socket->errorString() << ", trying to reconnect....\e[0m" ;
+            qWarning() << "\e[0;33m" << errorString() << ", trying to reconnect....\e[0m" ;
             reconnect();
 #warning FIX ME crashes when i get this error and try to reconnect.
             break;
         }
         case QAbstractSocket::DatagramTooLargeError: {
-            qWarning() << "\e[0;33m" << m_socket->errorString() << "\e[0m";
+            qWarning() << "\e[0;33m" << errorString() << "\e[0m";
             break;
         }
         default: {
-            qWarning() << "\e[0;33m Following error is not handled -> " << m_socket->errorString();
+            qWarning() << "\e[0;33m Following error is not handled -> " << errorString();
             break;
         }
 
@@ -199,15 +226,16 @@ void Connection::handleSocketErrors( QAbstractSocket::SocketError error )
 void Connection::reconnect()
 {
     //delete and recreate same socket
-    QAbstractSocket *aux = m_socket;
-    m_socket = 0;
-
-    if( aux->socketType() == QAbstractSocket::TcpSocket )
-        m_socket = new QTcpSocket();
-    else if( aux->socketType() == QAbstractSocket::UdpSocket )
-        m_socket = new QUdpSocket();
-
-    delete aux;
+//     QAbstractSocket *aux = m_socket;
+//     m_socket = 0;
+//
+//     if( aux->socketType() == QAbstractSocket::TcpSocket )
+//         m_socket = new QTcpSocket();
+//     else if( aux->socketType() == QAbstractSocket::UdpSocket )
+//         m_socket = new QUdpSocket();
+//
+//     delete aux;
     qDebug( "Connection::reconnect" );
-    startConnect();
+    qDebug() << "Socket state is : " << state();
+    startIrcConnect();
 }

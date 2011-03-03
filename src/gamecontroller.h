@@ -2,7 +2,7 @@
 * ioQIC - Qt irc bot that also sends rcon commands to UrbanTerror game server          *
 * Copyright (C) 2010, woki                                                             *
 *                                                                                      *
-* GameController.cpp is part of ioQIC                                                  *
+* GameController.h is part of ioQIC                                                    *
 *                                                                                      *
 * ioQIC is free software: you can redistribute it and/or modify it under the           *
 * terms of the GNU General Public License as published by the Free Software Foundation,*
@@ -16,8 +16,23 @@
 * program.  If not, see <http://www.gnu.org/licenses/>.                                *
 ****************************************************************************************/
 
-#include "GameController.h"
+#ifndef GAMECONTROLLER_H
+#define GAMECONTROLLER_H
 
-GameController::GameController()
+class Connection;
+class DbController;
+class QAbstractSocket;
+
+class GameController
 {
-}
+public:
+    GameController( DbController *db );
+
+    QAbstractSocket *connectionSocket() const;
+
+private:
+    DbController *m_db;
+    Connection *m_socket;
+};
+
+#endif // GAMECONTROLLER_H

@@ -3,20 +3,28 @@
 # -------------------------------------------------
 QT += network \
       sql
+
 QT -= gui
+
 TARGET = ioQIC
+
 CONFIG += console
+
 CONFIG -= app_bundle
+
 TEMPLATE = app
+
 SOURCES += src/main.cpp \
-    src/Brain.cpp \
-    src/IrcController.cpp \
-    src/DbController.cpp \
-    src/GameController.cpp \
-    src/Connection.cpp
-HEADERS += src/Brain.h \
-    src/IrcController.h \
-    src/DbController.h \
-    src/GameController.h \
-    src/Connection.h
+    src/brain.cpp \
+    src/irccontroller.cpp \
+    src/dbcontroller.cpp \
+    src/gamecontroller.cpp \
+    src/connection.cpp
+
+HEADERS += src/brain.h \
+    src/irccontroller.h \
+    src/dbcontroller.h \
+    src/gamecontroller.h \
+    src/connection.h
+
 OBJECTS_DIR = .obj
