@@ -6,7 +6,7 @@ QT += network \
 
 QT -= gui
 
-TARGET = ioQIC
+TARGET = ioQIC-BBEnforcer
 
 CONFIG += console
 

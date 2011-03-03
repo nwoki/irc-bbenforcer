@@ -25,25 +25,21 @@
 #include <QDebug>
 
 Brain::Brain()
-    //: m_dbControl( 0 )
-    : m_gameControl( 0 )
+    : QObject( 0 )
+    , m_dbControl( 0 )
+    , m_gameControl( 0 )
     , m_ircControl( 0 )
 {
     qDebug( "Brain::Brain" );
-    //m_dbControl = new DbController(); i don't need it on brain for now
-    DbController *db = new DbController();
 
-    m_ircControl = new IrcController( db );
+    m_dbControl = new DbController();
+    m_ircControl = new IrcController( m_dbControl );
 //     m_gameControl = new GameController( db );
 
 
     //read from server when data is available
     connect( m_ircControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseData() ) );
 //     connect( m_gameControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseData() ) );
-
-    //delete local pointer to db, don't need it anymore
-    db = 0;
-//    delete db;
 }
 
 Brain::~Brain()

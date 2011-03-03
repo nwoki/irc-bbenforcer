@@ -226,14 +226,14 @@ void IrcController::help( const QByteArray &user )
 
 void IrcController::kick( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
 {
-    if( !isAuthed( user, ip ) ) {   /* not authed */
-        sendPrivateMessage( user, "you're not authed to ioQIC" );
+    if( !isAuthed( user, ip ) ) {   // not authed
+        sendPrivateMessage( user, "you're not authed to ioQIC-BBEnforcer" );
         return;
     }
 
     QList< QByteArray >aux = msg.split( ' ' );
 
-    if( aux.size() == 1 ) { // too few arguments
+    if( aux.size() == 1 ) {         // too few arguments
         sendPrivateMessage( user, "too few arguments. '!kick <nick> <reason>'" );
         return;
     }
@@ -242,21 +242,14 @@ void IrcController::kick( const QByteArray &user, const QByteArray &msg, const Q
     if( aux.size() >= 3 ) {         // got reason!
         reason.clear();
         for( int i = 2; i < aux.size(); i++ ) {
-            reason.append( aux.at( i ) );   //+ " " ); put " " in front??
+            reason.append( aux.at( i ) );
             reason.append( " " );
-            qDebug() << "REASON = " << reason;
         }
     }
+
     // send kick
-    qDebug() << "sending kick command-> " << reason;
-
-    #warning TODO fix reason on kick, sends only last word from a phrase
-
     QByteArray cmd( "KICK " );
-    QMap< QString, QString > auxSettings = ircSettings();
-
-    cmd.append( auxSettings.value( "chan" ) + " " + /*nick*/aux.at( 1 ) + " " + reason.trimmed() + end );
-    qDebug() << "command to send IS: " << cmd;
+    cmd.append( m_chan + " " + /*nick*/aux.at( 1 ) + " :" + reason.trimmed() + end );
     m_connection->write( cmd );
 }
 

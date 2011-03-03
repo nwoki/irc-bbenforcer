@@ -38,10 +38,10 @@ public:
     QByteArray extractUser( const QByteArray &text );   /*!< extracts user from message */
 
 public slots:
-    void parseData();   /*!< parses data sent from server to bot */
+    void parseData();                                   /*!< parses data sent from server to bot */
 
 private:
-    //DbController *m_dbControl;    don't need this. Game and irc got pointer to it
+    DbController *m_dbControl;
     GameController *m_gameControl;
     IrcController *m_ircControl;
 };

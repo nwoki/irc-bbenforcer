@@ -38,41 +38,40 @@ DbController::~DbController()
 
 DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip )
 {
-    /*
-     * need to handle enum DATABASE_ERROR
-     */
+    // need to handle enum DATABASE_ERROR
     qDebug( "DbController::auth" );
 
-    if( !isOpen() ) { //open connection to database
+    if( !isOpen() ) {                   //open connection to database
         if( !open() ) {
             qWarning( "\e[1;31mDbController::auth can't open database\e[0m" );
             return DATABASE_ERROR;
         }
     }
 
-    /* check to see if user is already authed */
+    // check to see if user is already authed
     if( isAuthed( nick, ip ) ) {
         qDebug() << nick << " IS ALREADY AUTHED!!";
-        return ALREADY_AUTHED;   /* don't need to auth again */
+        return ALREADY_AUTHED;          // don't need to auth again
     }
 
     qDebug() << nick << " IS NOT AUTHED!!";
 
     QSqlQuery query;
-    QString queryStr( "select * from oplist where nick='" + nick + "' and password='" + password + "';" );
-    if( !query.exec( queryStr ) ) {    /* query failed */
+//     QString queryStr( "select * from oplist where nick='" + nick + "' and password='" + password + "';" );
+
+    if( !query.exec( "select * from oplist where nick='" + nick + "' and password='" + password + "';" ) ) {     // query failed
         qDebug( "3" );
         qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );
         close();
         return DATABASE_ERROR;
     }
 
-    if( !query.next() ) {   /* not on auth database */
+    if( !query.next() ) {               // not on auth database
         qWarning( "\e[0;33mDbController::auth %s is not on oplist\e[0m", qPrintable ( QString( nick ) ) );
         return AUTH_FAIL;
     }
 
-    if( addToAuthed( nick, ip ) ) {    /* add to authed table */
+    if( addToAuthed( nick, ip ) ) {     // add to authed table
         close();
         return AUTH_OK;
     }
