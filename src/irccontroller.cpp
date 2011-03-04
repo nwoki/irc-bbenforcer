@@ -62,15 +62,16 @@ QTcpSocket *IrcController::connectionSocket()
 void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
 {
     qDebug() << "MESSAGE I GET IS -> " << msg;
+    QList< QByteArray > msgList = msg.split( ' ' ); // split message
 
-    if( msg.contains( "!help" ) )           // print help
+    QString command = msgList.at( 0 );              // command given by user
+
+    if( command == "!help" )                        // print help
         help( user );
-    else if( msg.contains( "!auth" ) )      // auth user ( !auth <password> )
-        auth( user, msg, ip );
-    //kick
-    //TODO fix kick reason. if given " asdasasd asd asd" it kick with "asd" as only reason
-    else if( msg.contains( "!kick" ) )    /* !kick <nick> <reason> */
-        kick( user, msg, ip );
+    else if( command == "!auth" )                   // auth user ( !auth <password> )
+        auth( user, msgList, ip );
+    else if( command == "!kick" )                   // !kick <nick> <reason>
+        kick( user, msgList, ip );
 }
 
 
@@ -189,18 +190,18 @@ void IrcController::reconnect()
 /***********************************
 **         IRC FUNCTIONS          **
 ***********************************/
-void IrcController::auth( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
+void IrcController::auth( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip )
 {
-    QList< QByteArray >aux = msg.split( ' ' );
+//     QList< QByteArray >aux = msg.split( ' ' );
 
-    if( aux.size() > 2 ) {  /* too many parameters, abort */
+    if( msg.size() > 2 ) {  /* too many parameters, abort */
         sendPrivateMessage( user, "too many parameters. send me-> '!auth <password>'" );
         return;
     }
     else {
         DbController::authMsg response;
 
-        response = m_dbController->auth( user, aux.at( 1 )/*<- password*/, ip );
+        response = m_dbController->auth( user, msg.at( 1 )/*<- password*/, ip );
 
         if( response == DbController::ALREADY_AUTHED )
             sendPrivateMessage( user, "you're already authed!" );
@@ -225,32 +226,30 @@ void IrcController::help( const QByteArray &user )
 }
 
 
-void IrcController::kick( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
+void IrcController::kick( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip )
 {
     if( !isAuthed( user, ip ) ) {   // not authed
         sendPrivateMessage( user, "you're not authed to ioQIC-BBEnforcer" );
         return;
     }
 
-    QList< QByteArray >aux = msg.split( ' ' );
-
-    if( aux.size() == 1 ) {         // too few arguments
+    if( msg.size() == 1 ) {         // too few arguments
         sendPrivateMessage( user, "too few arguments. '!kick <nick> <reason>'" );
         return;
     }
 
     QByteArray reason( "kick" );    // this is for default in case no reason is specified
-    if( aux.size() >= 3 ) {         // got reason!
+    if( msg.size() >= 3 ) {         // got reason!
         reason.clear();
-        for( int i = 2; i < aux.size(); i++ ) {
-            reason.append( aux.at( i ) );
+        for( int i = 2; i < msg.size(); i++ ) {
+            reason.append( msg.at( i ) );
             reason.append( " " );
         }
     }
 
     // send kick
     QByteArray cmd( "KICK " );
-    cmd.append( m_chan + " " + /*nick*/aux.at( 1 ) + " :" + reason.trimmed() + end );
+    cmd.append( m_chan + " " + /*nick*/msg.at( 1 ) + " :" + reason.trimmed() + end );
     m_connection->write( cmd );
 }
 

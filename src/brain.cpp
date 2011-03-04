@@ -38,7 +38,7 @@ Brain::Brain()
 
 
     //read from server when data is available
-    connect( m_ircControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseData() ) );
+    connect( m_ircControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseIrcData() ) );
 //     connect( m_gameControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseData() ) );
 }
 
@@ -73,44 +73,47 @@ QByteArray Brain::extractUser( const QByteArray &text )
 ********************/
 
 //from here i dispatch irc lines with commands to corrispective classes
-void Brain::parseData()
+void Brain::parseIrcData()
 {
     while( m_ircControl->connectionSocket()->bytesAvailable() ) {
         QByteArray serverText = m_ircControl->connectionSocket()->readLine( 2000 );
         qDebug() << serverText;
 
-        if( serverText.contains( "NOTICE AUTH :*** Found your hostname" ) ) {   /* start sending info to login and join */
+        // start sending info to login and join
+        if( serverText.contains( "NOTICE AUTH :*** Found your hostname" ) ) {
             m_ircControl->logIn();
             return;
         }
 
-        else if( serverText.contains( "NOTICE AUTH :*** No ident response" ) ) {    /* extra login send to make sure i get in channel */
+        // extra login send to make sure i get in channel
+        else if( serverText.contains( "NOTICE AUTH :*** No ident response" ) ) {
             m_ircControl->logIn();
             return;
         }
 
-        else if( serverText.contains( "PING" ) ) {  /* send back ping data */
+        // send back ping data
+        else if( serverText.contains( "PING" ) ) {
             m_ircControl->pong( serverText );
             return;
         }
 
         // control this after i get the "end of" line from server
-        else if( serverText.contains( "PRIVMSG" ) ) {   /* someone's talking */
+        else if( serverText.contains( "PRIVMSG" ) ) {           // someone's talking
             QByteArray user = extractUser( serverText );
             QByteArray msg = extractText( serverText );
             QByteArray ip = extractIp( serverText );
 
-            if( msg.startsWith( '!' ) ) {   /* irc command is "!" */
+            if( msg.startsWith( '!' ) ) {                       // irc command is "!"
                 qDebug() << user << " ASKED FOR IRC BOT COMMAND with :" << msg;
                 m_ircControl->ircCommandParser( user, msg, ip );
             }
 
-            else if( msg.startsWith( '@' ) ) {  /* game server command is "@" */
+            else if( msg.startsWith( '@' ) ) {                  // game server command is "@"
                 qDebug() << user << " ASKED FOR GAME BOT COMMAND with :" << msg;
                 qDebug( "\e[1;31mBrain::parseData game server command -> need to implement! \e[0m" );
             }
 
-            else    /* nothing, normal msg */
+            else                                                // nothing, normal msg
                 qDebug() << user << " SENT NORMAL MESSAGE.LOG IT SOMEWHERE!";
         }
     }

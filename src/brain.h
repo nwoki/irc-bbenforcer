@@ -24,7 +24,6 @@
 class DbController;
 class GameController;
 class IrcController;
-class QByteArray;
 
 class Brain : public QObject
 {
@@ -33,12 +32,12 @@ public:
     Brain();
     ~Brain();
 
-    QByteArray extractIp( const QByteArray &text );     /*!< get's ip of client */
-    QByteArray extractText( const QByteArray &text );   /*!< extracts text sent by client */
-    QByteArray extractUser( const QByteArray &text );   /*!< extracts user from message */
+    QByteArray extractIp( const QByteArray &text );     /** extracts ip of client */
+    QByteArray extractText( const QByteArray &text );   /** extracts text sent by client */
+    QByteArray extractUser( const QByteArray &text );   /** extracts user from message */
 
 public slots:
-    void parseData();                                   /*!< parses data sent from server to bot */
+    void parseIrcData();                                /** parses data sent from server to bot */
 
 private:
     DbController *m_dbControl;

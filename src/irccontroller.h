@@ -74,7 +74,7 @@ private:
      * @param msg msg given by user
      * @param ip user ip
      */
-    void auth( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
+    void auth( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
 
     /**
      * print help message for user ( or send help file? )
@@ -88,7 +88,7 @@ private:
      * @param msg message sent by user
      * @param ip ip of user requesting kick
      */
-    void kick( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
+    void kick( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
 
     /****************
     * bot functions *

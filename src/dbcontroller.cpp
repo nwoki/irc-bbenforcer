@@ -60,7 +60,6 @@ DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArr
 //     QString queryStr( "select * from oplist where nick='" + nick + "' and password='" + password + "';" );
 
     if( !query.exec( "select * from oplist where nick='" + nick + "' and password='" + password + "';" ) ) {     // query failed
-        qDebug( "3" );
         qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );
         close();
         return DATABASE_ERROR;
@@ -119,16 +118,16 @@ void DbController::createDatabaseFirstRun()
     QSqlQuery query;
     // oplist table
     if ( !query.exec( "create table oplist("
-                         "id INTEGER PRIMARY KEY,"  // auotoincrement PK
-                         "nick TEXT,"
-                         "password TEXT);" ) ) {
+                      "id INTEGER PRIMARY KEY,"  // auotoincrement PK
+                      "nick TEXT,"
+                      "password TEXT);" ) ) {
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( oplist table )\e[0m" );
         return;
     }
 
     // authed table
     if( !query.exec( "create table authed("
-                     "id INTEGER PRIMARY KEY,"      // autoincrement PK
+                     "id INTEGER PRIMARY KEY,"  // autoincrement PK
                      "nick TEXT,"
                      "ip TEXT);" ) ) {
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( authed table )\e[0m" );
@@ -154,11 +153,9 @@ bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
                      "and ip='" + ip + "';" );
 
     // use first
-    if( query.next() )  //found match
-        //qDebug() << "HAS NEXT -> " << query.value( 0 ).toString();
+    if( query.next() )  // found match
         return true;
-    else    //no match found
-        //qDebug() << "NO NEXT -> " << query.value( 0 ).toString();
+    else                // no match found
         return false;
 }
 
@@ -192,12 +189,7 @@ void DbController::loadAdmins()
             else {    //write to database
                 qDebug( "\e[0;33mnick( %s ) is not on database..Adding now..\e[0m", qPrintable( auxNick ) );
 
-                int id = genNewId( OPLIST );
-
-                if( id == 0 )   // database error
-                    return;
-
-                if( !query.exec( "insert into oplist values('" + QString::number( id ) + "','" + auxNick + "','" + auxPassword + "');" ) ) {
+                if( !query.exec( "insert into oplist( nick, password ) values('" + auxNick + "','" + auxPassword + "');" ) ) {
                     qWarning() << "\e[1;31mDbController::loadAdmins FAILED to execute query" << query.lastError() << "\e[0m" ;
                     return;
                 }
@@ -244,7 +236,7 @@ void DbController::setup()
     QString databasePath( "database" );
     databasePath.append( QDir::separator() );   //add separator at end
 
-    //check if database folder exists
+    // check if database folder exists
     if( !QDir().exists( databasePath ) ) {
         if( !QDir().mkdir( "database" ) ) { //create directory
             qWarning( "\e[1;31mDbController::setup can't create folder for database. Check permissions\e[0m" );
@@ -252,13 +244,13 @@ void DbController::setup()
         }
     }
 
-    //check if config file exists! ( extra control, who knows what stupid users can do ;)  )
+    // check if config file exists! ( extra control, who knows what stupid users can do ;)  )
     if( !QFile::exists( settingsFile ) ) {
         qWarning( "\e[1;31m DbController::setup FAIL , can't find settings file!\e[0m" );
         return;
     }
 
-    //initialize settings to get dbName
+    // initialize settings to get dbName
     QSettings settings( QDir::toNativeSeparators( settingsFile ), QSettings::IniFormat );
     settings.beginReadArray( "DATABASE" );
 
@@ -271,7 +263,7 @@ void DbController::setup()
     QString dbName = settings.value( "dbName" ).toString();
     setDatabaseName( databasePath + dbName );
 
-    //check if database file exists
+    // check if database file exists
     if( QFile::exists( databasePath + dbName ) ) {
         qWarning( "\e[0;33mDbController::setup found database.. skipping setup\e[0m" );
         settings.endArray();
