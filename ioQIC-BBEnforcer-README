@@ -1,0 +1,46 @@
+ _        ____  _____ _____      ____  ____  ______        __
+(_)      / __ \|_   _/ ____|    |  _ \|  _ \|  ____|      / _|
+ _  ___ | |  | | | || |   ______| |_) | |_) | |__   _ __ | |_ ___  _ __ ___ ___ _ __
+| |/ _ \| |  | | | || |  |______|  _ <|  _ <|  __| | '_ \|  _/ _ \| '__/ __/ _ \ '__|
+| | (_) | |__| |_| || |____     | |_) | |_) | |____| | | | || (_) | | | (_|  __/ |
+|_|\___/ \___\_\_____\_____|    |____/|____/|______|_| |_|_| \___/|_|  \___\___|_|
+
+[ WHAT IS IT? ]
+ioQIC-BBEnforcer ( ioQuake BanBot Enforcer )
+Is an irc bot that does it's "default" job of managing an irc channel and as a plus
+it can comunicate with an UrbanTerror server to give rcon commands
+and also with a BanBot instance.
+
+For more info on BanBot, visit : http://2s2h.com/2steps-2hell-banbot.php
+
+
+[VERSION]
+Alfa
+
+
+[USAGE]
+The bot functions are divided into three groups: irc, game and banbot
+The irc group controls irc functions, the game group controls the ioUrbanTerror server functions and
+the banbot group controls the banbot instance specified in the config file.
+
+**IRC**
+!help                   - sends a link to the user pointing to this help file
+!auth <password>        - authenticates user with given <password> to the bot
+!kick <nick> <reason>   - kicks <nick> with given <reason>
+!ban  <nick>            - bans <nick> from channel
+
+**GAME**
+( coming soon )
+
+**BANBOT**
+( coming soon )
+
+
+[AUTHORS]
+
+n3m3s1s                 - n3m3s1s[at]2s2h[dot]com
+
+
+[BUGS]
+
+Please report any bugs to our bugtracking system @ http://x2s2hx.altervista.org/bugtracker/index.php

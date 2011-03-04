@@ -287,12 +287,8 @@ void IrcController::botKick( const QByteArray& nick, const QString& reason )
 
 void IrcController::help( const QByteArray &user )
 {
-    qDebug( "IrcController::ircCommandParser::help NEED TO IMPLEMENT" );
-    Q_UNUSED( user );
-    /*
-     * single shot here
-     */
-//    QTimer::singleShot( 500, m_connection, sendPrivateMessage( user, "sei un gay" ) );
+    qDebug( "IrcController::ircCommandParser::help" );
+    sendPrivateMessage( user, "-> http://2s2h.com/ioQIC-BBEnforcer/ioQIC-BBEnforcer-README" );
 }
 
 
