@@ -37,21 +37,75 @@ public:
         BANNED
     };
 
+    /**
+     * this struct is used to rappresent a user on an irc channel
+     */
+    struct IrcUser {
+        QByteArray nick;
+        QByteArray userLogin;
+        QByteArray ip;
+
+        /**
+         * tells me if info is valid. All fields should contain data!
+         */
+        bool isValid()
+        {
+            if( nick.isEmpty() || userLogin.isEmpty() || ip.isEmpty() )
+                return false;
+            else return true;
+        }
+    };
+
     DbController();
     ~DbController();
 
-    void addToTransition( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip );  /** adds user to transition database */
-    authMsg auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );           /** auth's client to the bot giving admin priviledges */
-    bool isAuthed( const QByteArray &nick, const QByteArray &ip );                                      /** checks if client is authed */
+    /**
+     * add banned user to database
+     * @param nick nick used by client when banned
+     * @param login of client to ban
+     * @param ip ip of banned client
+     * @param author who did the ban
+     * @param date when the client was banned
+     */
+    void addToBanned( const QByteArray &nick, const QByteArray &login, const QByteArray &ip, const QByteArray &author, const QString &date );
+
+    /** adds user to transition database if not present, otherwise updates ip if neccessary
+     * @param nick nick of new user
+     * @param userLogin user login of new user
+     * @param ip ip of new user
+     */
+    void addToTransition( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip );
+
+
+    /** auth's client to the bot giving admin priviledges
+     * @param nick nick of the user to auth
+     * @param password password of user to auth
+     * @param ip of user to auth
+     */
+    authMsg auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );
+
+    /**
+     * retrieve info about a user from transition database
+     * @param userNick user nick to search database for
+     */
+    IrcUser getIrcUser( const QByteArray &userNick );
+
+    /**
+     * checks if client is authed
+     * @param nick nick of user that requests the authentication
+     * @param ip ip of the user that requests the authentication
+     */
+    bool isAuthed( const QByteArray &nick, const QByteArray &ip );
+
     bool isBanned( const QByteArray &userLogin, const QByteArray &ip );                                 /** checks if client is banned by irc bot */
 
 private:
-    bool addToAuthed( const QByteArray &nick, const QByteArray &ip );   // add client to auth
-    void createDatabaseFirstRun();                                      // creates authed and oplist tables
+    bool addToAuthed( const QByteArray &nick, const QByteArray &ip );   /** add client to auth */
+    void createDatabaseFirstRun();                                      /** creates authed and oplist tables */
     bool openDb();                                                      /** opens a connection to the database if there is none. Returns the status of the operation */
-    void loadAdmins();                                                  // loads admins to oplist table
-    int genNewId( table t );                                            // creates new id for insertion in oplist table ( DB MUST BE ALREADY OPEN! )
-    void setup();                                                       // setup the database
+    void loadAdmins();                                                  /** loads admins to oplist table */
+    int genNewId( table t );                                            /** creates new id for insertion in oplist table ( DB MUST BE ALREADY OPEN! ) */
+    void setup();                                                       /** setup the database */
 };
 
 #endif // DBCONTROLLER_H

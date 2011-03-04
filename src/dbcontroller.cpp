@@ -38,6 +38,20 @@ DbController::~DbController()
 }
 
 
+void DbController::addToBanned( const QByteArray& nick, const QByteArray& login, const QByteArray& ip, const QByteArray& author, const QString& date )
+{
+    if( !openDb() )
+        return;
+
+    QSqlQuery query;
+
+    if( !query.exec( "insert into banned( nick, login, ip, author, date ) values('" + nick + "','" + login + "','" + ip + "','" + author + "','" + date + "');" ) ) {
+        qWarning() << "\e[1;31m[FAIL]DbController::addToBanned failed to execute query" << query.lastError() << "\e[0m" ;
+        return;
+    }
+}
+
+
 void DbController::addToTransition( const QByteArray& nick, const QByteArray& userLogin, const QByteArray& ip )
 {
     if( !openDb() )
@@ -126,6 +140,31 @@ DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArr
     }
 }
 
+
+DbController::IrcUser DbController::getIrcUser( const QByteArray& userNick )
+{
+    qDebug() << "DbController::getIrcUser looking for: " << userNick;
+    IrcUser user;
+    QSqlQuery query;
+
+    if( !query.exec( "select login, ip from transition where nick='" + userNick + "';" ) ) {
+        qWarning() << "\e[1;31m[FAIL]DbController::getIrcUser FAILED to execute query" << query.lastError() << "\e[0m";
+        return user;
+    }
+
+    if( !query.next() ) {
+        qWarning() << "\e[1;31m[FAIL]DbController::getIrcUser user: " << userNick << " is not on database \e[0m";
+        return user;
+    }
+
+    user.nick = userNick;
+    user.userLogin = query.value( 0 ).toByteArray();
+    user.ip = query.value( 1 ).toByteArray();
+
+    return user;
+}
+
+
 /*******************************
 *      PRIVATE FUNCTIONS       *
 ********************************/
@@ -180,6 +219,7 @@ void DbController::createDatabaseFirstRun()
     if( !query.exec( "create table banned("
                      "id INTEGER PRIMARY KEY,"  // autoincrement PK
                      "nick TEXT,"               // banned nick
+                     "login TEXT,"              // banned user login
                      "ip TEXT,"                 // banned ip
                      "author TEXT,"             // admin who banned the user
                      "date TEXT);" ) ) {        // date the user was banned
@@ -240,7 +280,26 @@ bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
 
 bool DbController::isBanned( const QByteArray& userLogin, const QByteArray& ip )
 {
+    qDebug( "DbController::isBanned" );
+    if( !openDb() ) {
+        qWarning( "\e[1;31m[FAIL]DbController::isBanned FAILED to open database. Can't verify if user is banned or not \e[0m" );
+        return false;
+    }
 
+    QSqlQuery query;
+    if( !query.exec( "select id from banned where login='" + userLogin + "';" ) ) {
+        qWarning() << "\e[1;31mDb[FAIL]DbController::isBanned FAILED to execute query" << query.lastError() << "\e[0m" ;
+        return false;
+    }
+
+    if( query.next() ) {  // user is banned
+        qDebug("user is banned");
+        return true;
+    }
+    else {
+        qDebug( "user is NOT banned " );
+        return false;
+    }
 }
 
 

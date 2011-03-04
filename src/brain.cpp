@@ -71,7 +71,12 @@ QByteArray Brain::extractNick( const QByteArray &text )
 QByteArray Brain::extractUserLogin( const QByteArray& text )
 {
     QList< QByteArray >aux = text.split( '@' );
-    QList< QByteArray >aux2 = aux.at( 0 ).split( '~' );
+    QList< QByteArray >aux2 = aux.at( 0 ).split( '!' );
+    int len = aux2.at( 1 ).length();
+
+    // normal user has the "~" whilst bnc don't
+    if( aux2.at( 1 ).at( 0 ) == '~' )
+        return aux2.at( 1 ).right( len - 1 );
     return aux2.value( 1 );
 }
 
@@ -112,8 +117,8 @@ void Brain::parseIrcData()
 
             m_dbControl->addToTransition( user, userLogin, ip );
 
-//             if( m_dbControl->isBanned( userLogin, ip ) )
-//             { /* BAN + kick */ }///TODO!!!!!!!!!!!!!
+            if( m_dbControl->isBanned( userLogin, ip ) )
+                m_ircControl->loginBan( user, userLogin, ip );  // kick - ban the user!
         }
 
         // control this after i get the "end of" line from server

@@ -21,6 +21,7 @@
 
 #include <QDir>
 #include <QSettings>
+#include <QTime>
 #include <QTimer>
 
 #define end "\r\n"
@@ -115,6 +116,17 @@ void IrcController::logIn()
     m_connection->write( byteNick );
     m_connection->write( byteUser );
     m_connection->write( byteJoin );
+}
+
+
+void IrcController::loginBan( const QByteArray& nick, const QByteArray& userLogin, const QByteArray& ip )
+{
+    qDebug( "IrcController::loginBan" );
+
+    // apply ban to user
+    botBan( userLogin, ip );
+    // then kick
+    botKick( nick, "you're busted dude" );
 }
 
 
@@ -217,18 +229,59 @@ void IrcController::auth( const QByteArray &user, const QList< QByteArray > &msg
 
 void IrcController::ban( const QByteArray& user, const QList< QByteArray >& msg, const QByteArray& ip )
 {
-    // MODE #asder +b *!~<nick>@<ip>
+    // MODE #asder +b *!~<username>@<ip>
     if( !isAuthed( user, ip ) ) {   // not authed
         sendPrivateMessage( user, "you're not authed to ioQIC-BBEnforcer" );
         return;
     }
 
     if( msg.size() == 1 ) {         // too few arguments
-        sendPrivateMessage( user, "too few arguments. '!ban <nick> <reason>'" );
+        sendPrivateMessage( user, "too few arguments. '!ban <nick>'" );
         return;
     }
 
+    // get client userLogin and ip from db
+    DbController::IrcUser userStruct = m_dbController->getIrcUser( msg.at( 1 )/*nick to ban*/ );
 
+    if( !userStruct.isValid() ) {
+        /// TODO implement what to do if info is invalid! tell user he sent wrong nick=?
+        qWarning( "\e[1;31mIrcController::ban invalid info. need to implement behaviour! \e[0m" );
+    }
+
+    // proceed with ban
+    QByteArray cmd( "MODE " );
+    cmd.append( m_chan );
+    cmd.append( " +b *!~" );
+    cmd.append( userStruct.userLogin );
+    cmd.append( "@" );
+    cmd.append( userStruct.ip );
+
+    // send to irc chan
+    m_connection->write( cmd + end );
+
+    // add to database
+    m_dbController->addToBanned( userStruct.nick, userStruct.userLogin, userStruct.ip, user, QDateTime::currentDateTime().toString( "dd-mm-yyyy hh:mm:ss" ) );
+}
+
+
+void IrcController::botBan( const QByteArray& userLogin, const QByteArray& ip )
+{
+    QByteArray cmd( "MODE " );
+    cmd.append( m_chan );
+    cmd.append( " +b *!~" );
+    cmd.append( userLogin );
+    cmd.append( "@" );
+    cmd.append( ip );
+
+    m_connection->write( cmd + end );
+}
+
+
+void IrcController::botKick( const QByteArray& nick, const QString& reason )
+{
+    QByteArray cmd( "KICK " );
+    cmd.append( m_chan + " " + nick + " :" + reason + end );
+    m_connection->write( cmd + end );
 }
 
 
@@ -267,7 +320,7 @@ void IrcController::kick( const QByteArray &user, const QList< QByteArray > &msg
     // send kick
     QByteArray cmd( "KICK " );
     cmd.append( m_chan + " " + /*nick*/msg.at( 1 ) + " :" + reason.trimmed() + end );
-    m_connection->write( cmd );
+    m_connection->write( cmd + end );
 }
 
 

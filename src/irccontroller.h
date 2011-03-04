@@ -53,6 +53,15 @@ public:
     void logIn();
 
     /**
+     * ban user on login if found in banned table. This is called from "BRAIN" when it checks the user
+     * JOIN on irc channel and then kick
+     * @param nick users nick to ban
+     * @param userLogin login to banned
+     * @param ip ip to ban
+     */
+    void loginBan( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip );
+
+    /**
      * respond to ping request from irc server
      * @param pingData ping data sent by server to resend
      */
@@ -83,6 +92,20 @@ private:
      * @param ip user ip
      */
     void ban( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
+
+    /**
+     * ban function used by bot( when auto-banning )
+     * @param userLogin login name to banned
+     * @param ip ip to ban
+     */
+    void botBan( const QByteArray &userLogin, const QByteArray &ip );
+
+    /**
+     * kick function used by the bot( when kick-banning )
+     * @param nick nick to kick from chan
+     * @param reason reason for kick
+     */
+    void botKick( const QByteArray &nick, const QString &reason );
 
     /**
      * print help message for user ( or send help file? )
