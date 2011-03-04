@@ -33,18 +33,22 @@ public:
 
     enum table {
         OPLIST,
-        AUTHED
+        AUTHED,
+        BANNED
     };
 
     DbController();
     ~DbController();
 
-    authMsg auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );   /** auth's client to the bot giving admin priviledges */
-    bool isAuthed( const QByteArray &nick, const QByteArray &ip );                              /** checks if client is authed */
+    void addToTransition( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip );  /** adds user to transition database */
+    authMsg auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );           /** auth's client to the bot giving admin priviledges */
+    bool isAuthed( const QByteArray &nick, const QByteArray &ip );                                      /** checks if client is authed */
+    bool isBanned( const QByteArray &userLogin, const QByteArray &ip );                                 /** checks if client is banned by irc bot */
 
 private:
     bool addToAuthed( const QByteArray &nick, const QByteArray &ip );   // add client to auth
     void createDatabaseFirstRun();                                      // creates authed and oplist tables
+    bool openDb();                                                      /** opens a connection to the database if there is none. Returns the status of the operation */
     void loadAdmins();                                                  // loads admins to oplist table
     int genNewId( table t );                                            // creates new id for insertion in oplist table ( DB MUST BE ALREADY OPEN! )
     void setup();                                                       // setup the database

@@ -62,10 +62,17 @@ QByteArray Brain::extractText( const QByteArray &text )
     return aux.value( 2 ).trimmed();
 }
 
-QByteArray Brain::extractUser( const QByteArray &text )
+QByteArray Brain::extractNick( const QByteArray &text )
 {
     QList< QByteArray >aux = text.split( '!' );
     return aux.value( 0 ).right( aux.value( 0 ).size() - 1 ).trimmed();
+}
+
+QByteArray Brain::extractUserLogin( const QByteArray& text )
+{
+    QList< QByteArray >aux = text.split( '@' );
+    QList< QByteArray >aux2 = aux.at( 0 ).split( '~' );
+    return aux2.value( 1 );
 }
 
 /*******************
@@ -97,9 +104,21 @@ void Brain::parseIrcData()
             return;
         }
 
+        // on join, add user to transition database and check if banned
+        else if( serverText.contains( "JOIN" ) ) {
+            QByteArray user = extractNick( serverText );
+            QByteArray userLogin = extractUserLogin( serverText );
+            QByteArray ip = extractIp( serverText );
+
+            m_dbControl->addToTransition( user, userLogin, ip );
+
+//             if( m_dbControl->isBanned( userLogin, ip ) )
+//             { /* BAN + kick */ }///TODO!!!!!!!!!!!!!
+        }
+
         // control this after i get the "end of" line from server
         else if( serverText.contains( "PRIVMSG" ) ) {           // someone's talking
-            QByteArray user = extractUser( serverText );
+            QByteArray user = extractNick( serverText );
             QByteArray msg = extractText( serverText );
             QByteArray ip = extractIp( serverText );
 

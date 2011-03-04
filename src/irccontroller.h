@@ -77,6 +77,14 @@ private:
     void auth( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
 
     /**
+     * ban user
+     * @param user user requesting ban
+     * @param msg msg given by user
+     * @param ip user ip
+     */
+    void ban( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
+
+    /**
      * print help message for user ( or send help file? )
      * @param user user to send info to
      */

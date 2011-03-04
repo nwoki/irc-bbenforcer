@@ -8,7 +8,8 @@ QT -= gui
 
 TARGET = ioQIC-BBEnforcer
 
-CONFIG += console
+CONFIG += console \
+          debug
 
 CONFIG -= app_bundle
 

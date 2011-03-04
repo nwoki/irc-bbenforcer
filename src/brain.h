@@ -32,9 +32,10 @@ public:
     Brain();
     ~Brain();
 
-    QByteArray extractIp( const QByteArray &text );     /** extracts ip of client */
-    QByteArray extractText( const QByteArray &text );   /** extracts text sent by client */
-    QByteArray extractUser( const QByteArray &text );   /** extracts user from message */
+    QByteArray extractIp( const QByteArray &text );         /** extracts ip of client */
+    QByteArray extractText( const QByteArray &text );       /** extracts text sent by client */
+    QByteArray extractNick( const QByteArray &text );       /** extracts user's nick from message */
+    QByteArray extractUserLogin( const QByteArray &text );  /** extracts user's login name on irc server ( nick and login name can be different! )*/
 
 public slots:
     void parseIrcData();                                /** parses data sent from server to bot */

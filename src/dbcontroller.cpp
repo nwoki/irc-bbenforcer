@@ -31,22 +31,69 @@ DbController::DbController()
     setup();
 }
 
+
 DbController::~DbController()
 {
     qDebug( "DbController::~DbController" );
 }
+
+
+void DbController::addToTransition( const QByteArray& nick, const QByteArray& userLogin, const QByteArray& ip )
+{
+    if( !openDb() )
+        return;
+    // check if already on database
+    QSqlQuery query;
+
+    if( !query.exec( "select id from transition where login='" + userLogin + "';" ) ) {
+        qWarning() << "\e[1;31m[FAIL]DbController::addToTransition failed to execute query" << query.lastError() << "\e[0m" ;
+        return;
+    }
+
+    // update ip for user if this has changed
+    if( query.next() ) {
+        qWarning() <<  "\e[0;33muser " << userLogin << " already in database\e[0m";
+
+        // check if ip has changed
+        if( query.exec( "select ip from transition where login='" + userLogin + "';" ) ) {
+            if( query.next() ) {
+                if( query.value( 0 ).toString() != ip ) {
+                    // update ip
+                    if( !query.exec( "update transition set nick='" + nick + "', ip='" + ip + "' where login='" + userLogin + "';" ) ) {
+                        qWarning() << "\e[1;31m[FAIL]DbController::addToTransition failed to execute query" << query.lastError() << "\e[0m" ;
+                        return;
+                    }
+                    else
+                        qDebug() <<  "\e[0;33mupdated nick and ip for user: " << userLogin << "\e[0m";
+                }
+            }
+        }
+        else {
+            qWarning() << "\e[1;31m[FAIL]DbController::addToTransition failed to execute query: " << query.lastError() << "\e[0m" ;
+            return;
+        }
+    }
+    // add to database
+    else {
+        qDebug() << "\e[0;33muser " << userLogin << " is not on database..Adding now..\e[0m";
+
+        if( !query.exec( "insert into transition( nick, login, ip ) values('" + nick + "','" + userLogin + "','" + ip + "');" ) ) {
+            qWarning() << "\e[1;31m[FAIL]DbController::addToTransition failed to execute query" << query.lastError() << "\e[0m" ;
+            return;
+        }
+        else
+            qDebug() <<  "\e[0;33muser: " << userLogin << " added to transition table \e[0m";
+    }
+}
+
 
 DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip )
 {
     // need to handle enum DATABASE_ERROR
     qDebug( "DbController::auth" );
 
-    if( !isOpen() ) {                   //open connection to database
-        if( !open() ) {
-            qWarning( "\e[1;31mDbController::auth can't open database\e[0m" );
-            return DATABASE_ERROR;
-        }
-    }
+    if( !openDb() )
+        return DATABASE_ERROR;
 
     // check to see if user is already authed
     if( isAuthed( nick, ip ) ) {
@@ -57,7 +104,6 @@ DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArr
     qDebug() << nick << " IS NOT AUTHED!!";
 
     QSqlQuery query;
-//     QString queryStr( "select * from oplist where nick='" + nick + "' and password='" + password + "';" );
 
     if( !query.exec( "select * from oplist where nick='" + nick + "' and password='" + password + "';" ) ) {     // query failed
         qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );
@@ -87,12 +133,8 @@ DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArr
 bool DbController::addToAuthed( const QByteArray &nick, const QByteArray &ip )
 {
     qDebug( "DbController::addToAuthed" );
-    if( !isOpen() ) {   //check is db is open
-        if( !open() ) {
-            qWarning( "\e[1;31mDbController::addToAuthed can't open database\e[0m" );
-            return false;
-        }
-    }
+    if( !openDb() )
+        return false;       // error with DB
 
     QSqlQuery query;
 
@@ -102,7 +144,7 @@ bool DbController::addToAuthed( const QByteArray &nick, const QByteArray &ip )
         return false;
     }
     else {
-        qDebug("added");
+        qDebug( "added" );
         return true;
     }
 }
@@ -134,19 +176,55 @@ void DbController::createDatabaseFirstRun()
         return;
     }
 
+    // banned table
+    if( !query.exec( "create table banned("
+                     "id INTEGER PRIMARY KEY,"  // autoincrement PK
+                     "nick TEXT,"               // banned nick
+                     "ip TEXT,"                 // banned ip
+                     "author TEXT,"             // admin who banned the user
+                     "date TEXT);" ) ) {        // date the user was banned
+        qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( banned table )\e[0m" );
+        return;
+    }
+
+    // transition table
+    /* used to keep info on users who join the channel. This info is used by the "!ban" function to lookup info when
+     * an admin requests a ban
+     */
+    if( !query.exec( "create table transition("
+                    "id INTEGER PRIMARY KEY,"  // autoincrement PK
+                    "nick TEXT,"               // user nick
+                    "login TEXT,"              // user's login used for the network, if not logged in, this is the same as nick
+                    "ip TEXT);" ) ) {          // user ip
+        qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( transition table )\e[0m" );
+        return;
+    }
+
     // close database
     close();
 }
 
+
+bool DbController::openDb()
+{
+    bool dbStatusOpen = true;
+
+    if( !isOpen() ) {   //check if db is open
+        if( !open() ) {
+            qWarning( "\e[1;31m[FAIL]DbController::openDb can't open database\e[0m" );
+            dbStatusOpen = false;
+        }
+    }
+
+    return dbStatusOpen;
+}
+
+
 bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
 {
     qDebug( "DbController::isAuthed" );
-    if( !isOpen() ) {   //check is db is open
-        if( !open() ) {
-            qWarning( "\e[1;31mDbController::isAuthed can't open database\e[0m" );
-            return false;
-        }
-    }
+    if( !openDb() )
+        return false;
 
     QSqlQuery query( "select nick from authed "
                      "where nick ='" + nick + "' "
@@ -159,11 +237,18 @@ bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
         return false;
 }
 
+
+bool DbController::isBanned( const QByteArray& userLogin, const QByteArray& ip )
+{
+
+}
+
+
 void DbController::loadAdmins()
 {
     qDebug( "DbController::loadAdmins" );
 
-    if( !open() ) { // open database for writing
+    if( !openDb() ) { // open database for writing
         qWarning( "\e[1;31mDbController::loadAdmins FAILED to open database. No admins loaded\e[0m" );
         return;
     }
@@ -281,7 +366,7 @@ void DbController::setup()
     }
 
     //open database to check everything was set correctly
-    if ( !open() ) {
+    if ( !openDb() ) {
         qWarning( "\e[1;31mDbController::setup can't create connection to SQLITE database: \"%s\"\e[0m", qPrintable( lastError().text() ) );
         return;
     }

@@ -72,6 +72,8 @@ void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &
         auth( user, msgList, ip );
     else if( command == "!kick" )                   // !kick <nick> <reason>
         kick( user, msgList, ip );
+    else if( command == "!ban" )                    // !ban <nick> <reason>
+        ban( user, msgList, ip );
 }
 
 
@@ -192,10 +194,8 @@ void IrcController::reconnect()
 ***********************************/
 void IrcController::auth( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip )
 {
-//     QList< QByteArray >aux = msg.split( ' ' );
-
-    if( msg.size() > 2 ) {  /* too many parameters, abort */
-        sendPrivateMessage( user, "too many parameters. send me-> '!auth <password>'" );
+    if( msg.size() > 2 || msg.size() == 1 ) {       // wrong parameters, abort
+        sendPrivateMessage( user, "wrong parameters. send me-> '!auth <password>'" );
         return;
     }
     else {
@@ -212,6 +212,23 @@ void IrcController::auth( const QByteArray &user, const QList< QByteArray > &msg
         else
             sendPrivateMessage( user, "problem with database, please contact an administrator" );
     }
+}
+
+
+void IrcController::ban( const QByteArray& user, const QList< QByteArray >& msg, const QByteArray& ip )
+{
+    // MODE #asder +b *!~<nick>@<ip>
+    if( !isAuthed( user, ip ) ) {   // not authed
+        sendPrivateMessage( user, "you're not authed to ioQIC-BBEnforcer" );
+        return;
+    }
+
+    if( msg.size() == 1 ) {         // too few arguments
+        sendPrivateMessage( user, "too few arguments. '!ban <nick> <reason>'" );
+        return;
+    }
+
+
 }
 
 
