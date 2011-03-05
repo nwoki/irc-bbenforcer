@@ -106,13 +106,15 @@ void GameController::bigText( const QByteArray& user, const QByteArray& ip, cons
             cmd.append( m_rconPass );
             cmd.append( " bigtext " );
 
-            for( int i = 1; i < msgList.count(); i++ ) {
-                bigtext.append( msgList.at( i ) );
-                bigtext.append( "." );
-            }
+            bigtext.append( '"' );
+
+            for( int i = 1; i < msgList.count(); i++ )
+                bigtext.append( msgList.at( i ) + " " );
+
+            bigtext.append( '"' );
 
             m_socket->write( cmd + bigtext );
-            emit( messageToUserSignal( user, "sent bigtext: '" + bigtext.replace( ".", " " ) + "'" ) );
+            emit( messageToUserSignal( user, "sent bigtext: " + bigtext ) );
         }
         else
             emit( notAuthedSignal( user ) );
