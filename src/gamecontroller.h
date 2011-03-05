@@ -19,20 +19,55 @@
 #ifndef GAMECONTROLLER_H
 #define GAMECONTROLLER_H
 
-class Connection;
-class DbController;
-class QAbstractSocket;
+#include <QUdpSocket>
 
-class GameController
+class DbController;
+
+class GameController : public QObject
 {
+    Q_OBJECT
+
 public:
     GameController( DbController *db );
 
-    QAbstractSocket *connectionSocket() const;
+    QUdpSocket *connectionSocket() const;   /** get socket used by class for connection to server */
+
+    /**
+     * parses game commands sent via irc by user
+     * @param user user of the command to parse
+     * @param msg message of the user to parse
+     * @param ip ip of user
+     */
+    void gameCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
+
+private slots:
+    void connectNotify();
+
+signals:
+    void notAuthedSignal( const QByteArray& user );
 
 private:
+    /*****************
+    * game functions *
+    *****************/
+    /**
+     * request game server status
+     * @param user user requesting command
+     * @param ip ip of user requesting command
+     */
+    void status( const QByteArray &user, const QByteArray &ip );
+
+
+    /***********
+     * PRIVATE *
+     **********/
+    void loadSettings();                    /** load game controller settings */
+
     DbController *m_db;
-    Connection *m_socket;
+    QUdpSocket *m_socket;
+    QString m_ip
+    , m_rconPass;
+    int m_port;
 };
 
 #endif // GAMECONTROLLER_H

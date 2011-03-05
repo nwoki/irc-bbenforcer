@@ -21,25 +21,23 @@
 #include "gamecontroller.h"
 #include "irccontroller.h"
 
-#include <QAbstractSocket>
+// #include <QAbstractSocket>
 #include <QDebug>
 
 Brain::Brain()
     : QObject( 0 )
-    , m_dbControl( 0 )
-    , m_gameControl( 0 )
-    , m_ircControl( 0 )
+    , m_dbControl( new DbController() )
+    , m_gameControl( new GameController( m_dbControl ) )
+    , m_ircControl( new IrcController( m_dbControl ) )
 {
     qDebug( "Brain::Brain" );
 
-    m_dbControl = new DbController();
-    m_ircControl = new IrcController( m_dbControl );
-//     m_gameControl = new GameController( db );
-
-
-    //read from server when data is available
+    // read from server when data is available
     connect( m_ircControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseIrcData() ) );
-//     connect( m_gameControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseData() ) );
+    connect( m_gameControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseGameData() ) );
+
+    // connect gameControl signals
+    connect( m_gameControl, SIGNAL( notAuthedSignal( QByteArray ) ), m_ircControl, SLOT( userNotAuthedSlot( QByteArray ) ) );
 }
 
 Brain::~Brain()
@@ -83,6 +81,17 @@ QByteArray Brain::extractUserLogin( const QByteArray& text )
 /*******************
 *      SLOTS       *
 ********************/
+
+void Brain::parseGameData()
+{
+    while( m_gameControl->connectionSocket()->hasPendingDatagrams() ) {
+        qint64 bytesToRead = m_gameControl->connectionSocket()->pendingDatagramSize();
+        QByteArray serverText = m_gameControl->connectionSocket()->read( bytesToRead );
+
+        qDebug() << "Recieved from game server: " << serverText;
+    }
+}
+
 
 //from here i dispatch irc lines with commands to corrispective classes
 void Brain::parseIrcData()
@@ -134,7 +143,7 @@ void Brain::parseIrcData()
 
             else if( msg.startsWith( '@' ) ) {                  // game server command is "@"
                 qDebug() << user << " ASKED FOR GAME BOT COMMAND with :" << msg;
-                qDebug( "\e[1;31mBrain::parseData game server command -> need to implement! \e[0m" );
+                m_gameControl->gameCommandParser( user, msg, ip );
             }
 
             else                                                // nothing, normal msg

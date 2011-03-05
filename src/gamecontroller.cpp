@@ -16,23 +16,115 @@
  * program.  If not, see <http://www.gnu.org/licenses/>.                                 *
  ****************************************************************************************/
 
-#include "connection.h"
 #include "dbcontroller.h"
 #include "gamecontroller.h"
 
-#include <QAbstractSocket>
+#include <QDir>
+#include <QSettings>
 
-#define RCON_START "\xff\xff\xff\xffrcon"
+#define RCON_START "\xff\xff\xff\xffrcon "
 
 
 GameController::GameController( DbController *db )
-    : m_db( db )
-    , m_socket( new Connection( QAbstractSocket::UdpSocket ) )
+    : QObject( 0 )
+    , m_db( db )
+    , m_socket( new QUdpSocket() )
 {
+    loadSettings();
 
+    connect( m_socket, SIGNAL( connected() ), this, SLOT( connectNotify() ) );
+
+    // connect
+    m_socket->connectToHost( m_ip, m_port, QIODevice::ReadWrite );
 }
 
-QAbstractSocket *GameController::connectionSocket() const
+
+QUdpSocket *GameController::connectionSocket() const
 {
     return m_socket;
+}
+
+
+void GameController::gameCommandParser( const QByteArray& user, const QByteArray& msg, const QByteArray& ip )
+{
+    qDebug() << "MESSAGE I GET IS -> " << msg;
+    QList< QByteArray > msgList = msg.split( ' ' ); // split message
+
+    QString command = msgList.at( 0 );              // command given by user
+
+    if( command == "@status" )                      // send "status" command to server
+        status( user, ip );
+}
+
+
+/*******************************
+ *      PRIVATE FUNCTIONS      *
+ *******************************/
+
+/*********
+ * SLOTS *
+ ********/
+void GameController::connectNotify()
+{
+    qDebug() << "Connected to host " << m_ip << ":" << m_port;
+}
+
+
+/*****************
+* game functions *
+*****************/
+void GameController::status(const QByteArray& user, const QByteArray &ip )
+{
+    qDebug( "GameController::status" );
+    if( m_db->isAuthed( user, ip ) ) {  // generate status command
+        QByteArray cmd( RCON_START );
+        cmd.append( m_rconPass );
+        cmd.append( " status" );
+
+        m_socket->write( cmd );
+    }
+    else                                // tell user he/she's not authed
+        emit( notAuthedSignal( user ) );
+}
+
+
+/***********
+ * PRIVATE *
+ **********/
+void GameController::loadSettings()
+{
+    qDebug( "GameController::loadSettings" );
+    //set config file
+    QSettings settings( QDir::toNativeSeparators( "cfg/config" ), QSettings::IniFormat );
+
+    if( settings.status() == QSettings::FormatError ) {
+        qWarning( "\e[1;31m[FAIL] GameController::loadSettings FAILED to load settings. Format Error, check your config file\e[0m" );
+        return;
+    }
+
+    qDebug( "GameController::loadSettings GAME SERVER SETTINGS" );
+
+    settings.beginReadArray( "GAMESERVER" );
+
+    m_ip = settings.value( "ip" ).toString();
+    if( m_ip.isEmpty() ) {
+        qWarning( "\e[1;31m[FAIL]GameController::loadSettings can't load 'ip'. Check your config file\e[0m" );
+        return;
+    }
+
+    bool ok;
+    m_port = settings.value( "port" ).toInt( &ok );
+    if( !ok ) {
+        qWarning( "\e[1;31m[FAIL]GameController::loadSettings can't load 'port'. Check your config file.\e[0m" );
+        return;
+    }
+
+    m_rconPass = settings.value( "rconPass" ).toString();
+
+    if( m_rconPass.isEmpty() )
+        qWarning( "\e[1;31mWARNING: empty rcon pass!" );
+
+    // close settings file
+    settings.endArray();
+    qDebug() << "Settings: " << m_ip << "  " << m_port << " " << m_rconPass;
 }

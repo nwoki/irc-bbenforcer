@@ -136,6 +136,16 @@ void IrcController::pong( const QByteArray &pingData )
     m_connection->write( "PONG :" + pingSplit.at( 1 ) + end );
 }
 
+
+/*********
+ * SLOTS *
+ ********/
+void IrcController::userNotAuthedSlot( const QByteArray& nick )
+{
+    sendNotAuthedMessage( nick );
+}
+
+
 /*******************************
 *      PRIVATE FUNCTIONS       *
 ********************************/
@@ -231,7 +241,7 @@ void IrcController::ban( const QByteArray& user, const QList< QByteArray >& msg,
 {
     // MODE #asder +b *!~<username>@<ip>
     if( !isAuthed( user, ip ) ) {   // not authed
-        sendPrivateMessage( user, "you're not authed to ioQIC-BBEnforcer" );
+        sendNotAuthedMessage( user );
         return;
     }
 
@@ -295,7 +305,7 @@ void IrcController::help( const QByteArray &user )
 void IrcController::kick( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip )
 {
     if( !isAuthed( user, ip ) ) {   // not authed
-        sendPrivateMessage( user, "you're not authed to ioQIC-BBEnforcer" );
+        sendNotAuthedMessage( user );
         return;
     }
 
@@ -349,6 +359,12 @@ QByteArray IrcController::genPrivateMessage( const QByteArray &nick, const QByte
 }
 
 
+void IrcController::sendNotAuthedMessage( const QByteArray& nick )
+{
+    sendPrivateMessage( nick, "you're not authed to ioQIC-BBEnforcer" );
+}
+
+
 void IrcController::sendPrivateMessage( const QByteArray &nick, const QByteArray &message )
 {
     m_connection->write( genPrivateMessage( nick, message ) );
@@ -397,5 +413,6 @@ void IrcController::loadSettings()
         return;
     }
     qDebug() << ircSettings();
+    settings.endArray();
 }
 

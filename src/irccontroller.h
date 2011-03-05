@@ -67,6 +67,9 @@ public:
      */
     void pong( const QByteArray &pingData );
 
+public slots:
+    void userNotAuthedSlot( const QByteArray& nick );
+
 private slots:
     void connectNotify();
     void disconnectNotify();
@@ -127,6 +130,7 @@ private:
     bool isAuthed( const QByteArray &user, const QByteArray &ip );
     QByteArray genChannelMessage( const QByteArray &messageToSend );
     QByteArray genPrivateMessage( const QByteArray &nick, const QByteArray &messageToSend );
+    void sendNotAuthedMessage( const QByteArray &nick );
     void sendPrivateMessage( const QByteArray &nick, const QByteArray &message );               // send PVT message to nick
 
 

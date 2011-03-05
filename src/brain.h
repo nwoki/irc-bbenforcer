@@ -38,7 +38,17 @@ public:
     QByteArray extractUserLogin( const QByteArray &text );  /** extracts user's login name on irc server ( nick and login name can be different! )*/
 
 public slots:
-    void parseIrcData();                                /** parses data sent from server to bot */
+    /**
+     * parses data recieved from gameserver and then
+     * sends it to the user that requested the info in
+     * case there is a response from the server
+     */
+    void parseGameData();
+
+    /**
+     * parses data recieved from irc server
+     */
+    void parseIrcData();
 
 private:
     DbController *m_dbControl;

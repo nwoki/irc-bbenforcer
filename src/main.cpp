@@ -20,15 +20,14 @@
 #include <iostream>
 
 #include "brain.h"
-#include "connection.h"
 
-int main(int argc, char *argv[])
+int main( int argc, char *argv[] )
 {
-    QCoreApplication a(argc, argv);
+    QCoreApplication a( argc, argv );
 
     std::cout << "\e[1;32m";
     std::cout << "*****************************************************************" << std::endl;
-    std::cout << "* ioQIC Copyright (C) 2010 'woki'                               *" << std::endl;
+    std::cout << "* ioQIC-BBEnforcer Copyright (C) 2010-2011 '(n)woki'            *" << std::endl;
     std::cout << "* This program comes with ABSOLUTELY NO WARRANTY                *" << std::endl;
     std::cout << "* This is free software, and you are welcome to redistribute it *" << std::endl;
     std::cout << "* under certain conditions.                                     *" << std::endl;
