@@ -76,8 +76,15 @@ public:
 
 public slots:
     /**
-     * slot used to send not authed message to user
-     * requesting a service from gameController
+     * slot used to send messages to user from other classes
+     * @param nick nick to send message to
+     * @param message message to send
+     */
+    void messageToUserSlot( const QByteArray &nick, const QByteArray &message );
+
+    /**
+     * slot used to send not authed messages to users
+     * from other classes
      * @param nick nick to send message to
      */
     void userNotAuthedSlot( const QByteArray& nick );
@@ -139,13 +146,6 @@ private:
     /****************
     * bot functions *
     ****************/
-    /**
-     * checks if user is authed to ioQIC-BBE
-     * @param user user to check
-     * @param ip ip of user to check
-     */
-    bool isAuthed( const QByteArray &user, const QByteArray &ip );
-
     /**
      * generate a channel message
      * @param messageToSend message to send to channel

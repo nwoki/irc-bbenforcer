@@ -37,6 +37,7 @@ Brain::Brain()
 
     // connect gameControl signals
     connect( m_gameControl, SIGNAL( notAuthedSignal( QByteArray ) ), m_ircControl, SLOT( userNotAuthedSlot( QByteArray ) ) );
+    connect( m_gameControl, SIGNAL( messageToUserSignal( QByteArray, QByteArray ) ), m_ircControl, SLOT( messageToUserSlot( QByteArray, QByteArray ) ) );
 }
 
 Brain::~Brain()

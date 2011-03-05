@@ -53,9 +53,17 @@ void GameController::gameCommandParser( const QByteArray& user, const QByteArray
     qDebug() << "MESSAGE I GET IS -> " << msg;
     QList< QByteArray > msgList = msg.split( ' ' ); // split message
 
-    QString command = msgList.at( 0 );              // command given by user
+    QString cmd = msgList.at( 0 );              // command given by user
 
-    if( command == "@status" )                      // send "status" command to server
+    if( cmd == "@bigtext" )                     // send bigtext to server
+        bigText( user, ip, msgList );
+    else if( cmd == "@gravity" )                // set server gravity
+        gravity( user, ip, msgList );
+    else if( cmd == "@nextmap" )                // set server nextmap
+        nextMap( user, ip, msgList );
+    else if( cmd == "@map" )                    // set server current map
+        map( user, ip, msgList );
+    else if( cmd == "@status" )                 // send "status" command to server
         status( user, ip );
 }
 
@@ -87,6 +95,108 @@ void GameController::connectNotify()
 /*****************
 * game functions *
 *****************/
+void GameController::bigText( const QByteArray& user, const QByteArray& ip, const QList< QByteArray >& msgList )
+{
+    qDebug( "GameController::bigText" );
+
+    if( msgList.count() > 1 ) {
+    QByteArray bigtext;
+        if( m_db->isAuthed( user, ip ) ) {  // gerate command
+            QByteArray cmd( RCON_START );
+            cmd.append( m_rconPass );
+            cmd.append( " bigtext " );
+
+            for( int i = 1; i < msgList.count(); i++ ) {
+                bigtext.append( msgList.at( i ) );
+                bigtext.append( "." );
+            }
+
+            m_socket->write( cmd + bigtext );
+            emit( messageToUserSignal( user, "sent bigtext: '" + bigtext.replace( ".", " " ) + "'" ) );
+        }
+        else
+            emit( notAuthedSignal( user ) );
+    }
+    else
+        emit( messageToUserSignal( user, "wrong number of parameters. [usage]@bigtext <text>" ) );
+}
+
+
+void GameController::gravity( const QByteArray& user, const QByteArray& ip, const QList< QByteArray >& msgList )
+{
+    qDebug( "GameController::gravity" );
+
+    if( msgList.count() == 2 ) {
+        bool ok;
+
+        msgList.at( 1 ).toInt( &ok );
+
+        if( !ok ) {
+            emit( messageToUserSignal( user, "the value for gravity has to be a number" ) );
+            return;
+        }
+
+        if( m_db->isAuthed( user, ip ) ) {  // gerate command
+            QByteArray cmd( RCON_START );
+            cmd.append( m_rconPass );
+            cmd.append( " set g_gravity " );
+            cmd.append( msgList.at( 1 ) );  // map
+
+            m_socket->write( cmd );
+            emit( messageToUserSignal( user, "gravity set to " + msgList.at( 1 ) ) );
+        }
+        else
+            emit( notAuthedSignal( user ) );
+    }
+    else
+        emit( messageToUserSignal( user, "wrong number of parameters. [usage]@gravity <num>" ) );
+}
+
+
+void GameController::map( const QByteArray& user, const QByteArray& ip, const QList< QByteArray >& msgList )
+{
+    qDebug( "GameController::map" );
+
+    if( msgList.count() == 2 ) {
+        if( m_db->isAuthed( user, ip ) ) {  // gerate command
+            QByteArray cmd( RCON_START );
+            cmd.append( m_rconPass );
+            cmd.append( " map " );
+            cmd.append( msgList.at( 1 ) );  // map
+
+            m_socket->write( cmd );
+            emit( messageToUserSignal( user, "map set to: " + msgList.at( 1 ) ) );
+        }
+        else
+            emit( notAuthedSignal( user ) );
+    }
+    else
+        emit( messageToUserSignal( user, "wrong number of parameters. [usage]@map <map>" ) );
+}
+
+
+void GameController::nextMap( const QByteArray& user, const QByteArray& ip, const QList< QByteArray >& msgList )
+{
+    qDebug( "GameController::nextMap" );
+
+    if( msgList.count() == 2 ) {
+        if( m_db->isAuthed( user, ip ) ) {  // gerate command
+            QByteArray cmd( RCON_START );
+            cmd.append( m_rconPass );
+            cmd.append( " set g_nextmap " );
+            cmd.append( msgList.at( 1 ) );  // map
+
+            m_socket->write( cmd );
+            emit( messageToUserSignal( user, "next map set to: " + msgList.at( 1 ) ) );
+        }
+        else
+            emit( notAuthedSignal( user ) );
+    }
+    else
+        emit( messageToUserSignal( user, "wrong number of parameters. [usage]@nextmap <map>" ) );
+}
+
+
 void GameController::status( const QByteArray& user, const QByteArray &ip )
 {
     qDebug( "GameController::status" );

@@ -31,13 +31,17 @@ Game commands are specified by putting a "@" in front.
 
 
 **IRC**
-!help                   - sends a link to the user pointing to this help file
-!auth <password>        - authenticates user with given <password> to the bot
-!kick <nick> <reason>   - kicks <nick> with given <reason>
-!ban  <nick>            - bans <nick> from channel
+!help                       - sends a link to the user pointing to this help file
+!auth    <password>         - authenticates user with given <password> to the bot
+!ban     <nick>             - bans <nick> from channel
+!kick    <nick> <reason>    - kicks <nick> with given <reason>
 
 **GAME**
-@status                 - get status from server specified in config file
+@bigtext <text>             - send <text> as bigtext to server
+@gravity <num>              - set server gravity to <num>
+@map     <map>              - set server map to <map> NOTE: <map> has to be the map full name. es: "@map ut4_casa"
+@nextmap <map>              - set server nextmap to <map> NOTE: <map> has to be the map full name. es: "@map ut4_casa"
+@status                     - get status from server specified in config file
 
 **BANBOT**
 ( coming soon )

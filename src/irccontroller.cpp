@@ -144,6 +144,12 @@ void IrcController::sendLineToUser( const QByteArray& nick, const QByteArray& li
 /*********
  * SLOTS *
  ********/
+void IrcController::messageToUserSlot( const QByteArray& nick, const QByteArray& message )
+{
+    sendPrivateMessage( nick, message );
+}
+
+
 void IrcController::userNotAuthedSlot( const QByteArray& nick )
 {
     sendNotAuthedMessage( nick );
@@ -243,7 +249,7 @@ void IrcController::auth( const QByteArray &user, const QList< QByteArray > &msg
 
 void IrcController::ban( const QByteArray& user, const QList< QByteArray >& msg, const QByteArray& ip )
 {
-    if( !isAuthed( user, ip ) ) {   // not authed
+    if( !m_dbController->isAuthed( user, ip ) ) {   // not authed
         sendNotAuthedMessage( user );
         return;
     }
@@ -307,7 +313,7 @@ void IrcController::help( const QByteArray &user )
 
 void IrcController::kick( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip )
 {
-    if( !isAuthed( user, ip ) ) {   // not authed
+    if( !m_dbController->isAuthed( user, ip ) ) {   // not authed
         sendNotAuthedMessage( user );
         return;
     }
@@ -337,14 +343,6 @@ void IrcController::kick( const QByteArray &user, const QList< QByteArray > &msg
 /***********************************
 **         BOT FUNCTIONS          **
 ***********************************/
-
-
-bool IrcController::isAuthed( const QByteArray &user, const QByteArray &ip )
-{
-    return m_dbController->isAuthed( user, ip );
-}
-
-
 QByteArray IrcController::genChannelMessage( const QByteArray &messageToSend )
 {
     QMap< QString, QString > auxSettings = ircSettings();

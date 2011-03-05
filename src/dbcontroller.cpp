@@ -266,14 +266,16 @@ bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
     if( !openDb() )
         return false;
 
-    QSqlQuery query( "select nick from authed "
-                     "where nick ='" + nick + "' "
-                     "and ip='" + ip + "';" );
+    QSqlQuery query;
 
-    // use first
-    if( query.next() )  // found match
+    if( !query.exec( "select id from authed where nick ='" + nick + "' and ip='" + ip + "';" ) ) {
+        qWarning() << "\e[1;31mDb[FAIL]DbController::isAuthed FAILED to execute query" << query.lastError() << "\e[0m" ;
+        return false;
+    }
+
+    if( query.next() )  // found value
         return true;
-    else                // no match found
+    else                // no value found
         return false;
 }
 
