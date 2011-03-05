@@ -21,7 +21,6 @@
 #include "gamecontroller.h"
 #include "irccontroller.h"
 
-// #include <QAbstractSocket>
 #include <QDebug>
 
 Brain::Brain()
@@ -84,11 +83,22 @@ QByteArray Brain::extractUserLogin( const QByteArray& text )
 
 void Brain::parseGameData()
 {
+    QByteArray nick = m_gameControl->nextUserInLine();
+
     while( m_gameControl->connectionSocket()->hasPendingDatagrams() ) {
         qint64 bytesToRead = m_gameControl->connectionSocket()->pendingDatagramSize();
         QByteArray serverText = m_gameControl->connectionSocket()->read( bytesToRead );
 
-        qDebug() << "Recieved from game server: " << serverText;
+        QList<QByteArray> msgLines = serverText.split( '\n' );
+
+        if( !nick.isEmpty() ) {
+            for( int i = 0; i < msgLines.count(); i++ ) {
+                QByteArray msg = msgLines.at( i );
+
+                if( !msg.isEmpty() )
+                    m_ircControl->sendLineToUser( nick, msg );
+            }
+        }
     }
 }
 

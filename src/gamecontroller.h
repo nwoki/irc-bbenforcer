@@ -20,6 +20,7 @@
 #define GAMECONTROLLER_H
 
 #include <QUdpSocket>
+#include <QVector>
 
 class DbController;
 
@@ -40,11 +41,17 @@ public:
      */
     void gameCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
 
+    /**
+     * returns the next user in line that has requested a command with info in response
+     * from the gameserver
+     */
+    QByteArray nextUserInLine();
+
 private slots:
     void connectNotify();
 
 signals:
-    void notAuthedSignal( const QByteArray& user );
+    void notAuthedSignal( const QByteArray &user );
 
 private:
     /*****************
@@ -68,6 +75,15 @@ private:
     QString m_ip
     , m_rconPass;
     int m_port;
+
+    /**
+     * keeps track of the users that sent a command to the server.
+     * Whenever a new command is sent, the user that requested the
+     * command is sent in line.
+     * This way from brain I know who to send the response message to
+     * in case the game command needs to send back any info
+     */
+    QVector< QByteArray > m_userList;
 };
 
 #endif // GAMECONTROLLER_H

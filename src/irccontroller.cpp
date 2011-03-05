@@ -92,19 +92,19 @@ QMap< QString, QString > IrcController::ircSettings()
 void IrcController::logIn()
 {
     qDebug( "IrcController::logIn" );
-    //get settings
+    // get settings
     QMap< QString, QString > data = ircSettings();
     QString nick = data.value( "nick" );
 
-    //nick
+    // nick
     QByteArray byteNick( "NICK " );
     byteNick.append( nick + end );
 
-    //user
+    // user
     QByteArray byteUser( "USER " );
     byteUser.append( nick + " " + nick + " " + nick + " " + nick + " : " + nick + end );
 
-    //join request
+    // join request
     QByteArray byteJoin( "JOIN " );
     byteJoin.append( data.value( "chan" ) + end );
 
@@ -123,10 +123,8 @@ void IrcController::loginBan( const QByteArray& nick, const QByteArray& userLogi
 {
     qDebug( "IrcController::loginBan" );
 
-    // apply ban to user
-    botBan( userLogin, ip );
-    // then kick
-    botKick( nick, "you're busted dude" );
+    botBan( userLogin, ip );                // apply ban to user
+    botKick( nick, "you're busted dude" );  // then kick
 }
 
 
@@ -134,6 +132,12 @@ void IrcController::pong( const QByteArray &pingData )
 {
     QList<QByteArray>pingSplit = pingData.split( ':' );
     m_connection->write( "PONG :" + pingSplit.at( 1 ) + end );
+}
+
+
+void IrcController::sendLineToUser( const QByteArray& nick, const QByteArray& line )
+{
+    sendPrivateMessage( nick, line );
 }
 
 
@@ -239,7 +243,6 @@ void IrcController::auth( const QByteArray &user, const QList< QByteArray > &msg
 
 void IrcController::ban( const QByteArray& user, const QList< QByteArray >& msg, const QByteArray& ip )
 {
-    // MODE #asder +b *!~<username>@<ip>
     if( !isAuthed( user, ip ) ) {   // not authed
         sendNotAuthedMessage( user );
         return;

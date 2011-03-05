@@ -67,7 +67,19 @@ public:
      */
     void pong( const QByteArray &pingData );
 
+    /**
+     * used to send info tu user from outside irccontroller
+     * @param nick nick to send message to
+     * @param line line to send to nick
+     */
+    void sendLineToUser( const QByteArray &nick, const QByteArray &line );
+
 public slots:
+    /**
+     * slot used to send not authed message to user
+     * requesting a service from gameController
+     * @param nick nick to send message to
+     */
     void userNotAuthedSlot( const QByteArray& nick );
 
 private slots:
@@ -127,17 +139,44 @@ private:
     /****************
     * bot functions *
     ****************/
+    /**
+     * checks if user is authed to ioQIC-BBE
+     * @param user user to check
+     * @param ip ip of user to check
+     */
     bool isAuthed( const QByteArray &user, const QByteArray &ip );
+
+    /**
+     * generate a channel message
+     * @param messageToSend message to send to channel
+     */
     QByteArray genChannelMessage( const QByteArray &messageToSend );
+
+    /**
+     * generate a private message
+     * @param nick nick to send message to
+     * @param messageToSend message to send ti nick
+     */
     QByteArray genPrivateMessage( const QByteArray &nick, const QByteArray &messageToSend );
+
+    /**
+     * send default not authed notification to user in chan
+     * @param nick nick to send message to
+     */
     void sendNotAuthedMessage( const QByteArray &nick );
+
+    /**
+     * sends private message to user in chan
+     * @param nick nick to send message to
+     * @param message message to send
+     */
     void sendPrivateMessage( const QByteArray &nick, const QByteArray &message );               // send PVT message to nick
 
 
     /***********
      * PRIVATE *
      **********/
-    void loadSettings();
+    void loadSettings();                /** load bot's irc settings from config file */
 
     QTcpSocket *m_connection;
     DbController *m_dbController;

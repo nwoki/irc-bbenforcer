@@ -19,9 +19,16 @@ Alfa
 
 
 [USAGE]
+First of all, configure your admins and server. You'll find the config files in the "config" folder.
+The files have instructions so you don't make a mess. They're easy to modify.
+
 The bot functions are divided into three groups: irc, game and banbot
 The irc group controls irc functions, the game group controls the ioUrbanTerror server functions and
 the banbot group controls the banbot instance specified in the config file.
+
+Irc commands are specified by putting a "!" in front.
+Game commands are specified by putting a "@" in front.
+
 
 **IRC**
 !help                   - sends a link to the user pointing to this help file
@@ -30,7 +37,7 @@ the banbot group controls the banbot instance specified in the config file.
 !ban  <nick>            - bans <nick> from channel
 
 **GAME**
-( coming soon )
+@status                 - get status from server specified in config file
 
 **BANBOT**
 ( coming soon )

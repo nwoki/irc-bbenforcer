@@ -280,6 +280,9 @@ bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
 
 bool DbController::isBanned( const QByteArray& userLogin, const QByteArray& ip )
 {
+    Q_UNUSED( ip );
+    /// NOTICE for now i just check user login name. If this is not sufficient, i'll add the ip to the search criteria
+
     qDebug( "DbController::isBanned" );
     if( !openDb() ) {
         qWarning( "\e[1;31m[FAIL]DbController::isBanned FAILED to open database. Can't verify if user is banned or not \e[0m" );

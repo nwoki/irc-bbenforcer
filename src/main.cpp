@@ -35,5 +35,6 @@ int main( int argc, char *argv[] )
     std::cout << "*****************************************************************\e[0m" << std::endl;
 
     Brain *brain = new Brain();
+    Q_UNUSED( brain );
     return a.exec();
 }

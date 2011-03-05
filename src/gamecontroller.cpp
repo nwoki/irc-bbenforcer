@@ -29,6 +29,9 @@ GameController::GameController( DbController *db )
     : QObject( 0 )
     , m_db( db )
     , m_socket( new QUdpSocket() )
+    , m_ip( QString() )
+    , m_rconPass( QString() )
+    , m_port( 0 )
 {
     loadSettings();
 
@@ -57,6 +60,17 @@ void GameController::gameCommandParser( const QByteArray& user, const QByteArray
 }
 
 
+QByteArray GameController::nextUserInLine()
+{
+    QByteArray user;
+    if( !m_userList.isEmpty() ) {   // no users in line
+        user = m_userList.first();
+        m_userList.pop_front();     // remove user from list
+    }
+    return user;
+}
+
+
 /*******************************
  *      PRIVATE FUNCTIONS      *
  *******************************/
@@ -73,7 +87,7 @@ void GameController::connectNotify()
 /*****************
 * game functions *
 *****************/
-void GameController::status(const QByteArray& user, const QByteArray &ip )
+void GameController::status( const QByteArray& user, const QByteArray &ip )
 {
     qDebug( "GameController::status" );
     if( m_db->isAuthed( user, ip ) ) {  // generate status command
@@ -82,6 +96,7 @@ void GameController::status(const QByteArray& user, const QByteArray &ip )
         cmd.append( " status" );
 
         m_socket->write( cmd );
+        m_userList.append( user );      // add user to list
     }
     else                                // tell user he/she's not authed
         emit( notAuthedSignal( user ) );

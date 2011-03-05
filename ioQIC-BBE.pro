@@ -19,13 +19,11 @@ SOURCES += src/main.cpp \
     src/brain.cpp \
     src/irccontroller.cpp \
     src/dbcontroller.cpp \
-    src/gamecontroller.cpp \
-    src/connection.cpp
+    src/gamecontroller.cpp
 
 HEADERS += src/brain.h \
     src/irccontroller.h \
     src/dbcontroller.h \
-    src/gamecontroller.h \
-    src/connection.h
+    src/gamecontroller.h
 
 OBJECTS_DIR = .obj
