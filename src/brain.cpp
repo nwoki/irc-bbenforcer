@@ -90,6 +90,9 @@ void Brain::parseGameData()
         qint64 bytesToRead = m_gameControl->connectionSocket()->pendingDatagramSize();
         QByteArray serverText = m_gameControl->connectionSocket()->read( bytesToRead );
 
+//         // use for debugging
+//         qDebug() << "GAME RECIEVED DATA: " << serverText;
+
         QList<QByteArray> msgLines = serverText.split( '\n' );
 
         if( !nick.isEmpty() ) {

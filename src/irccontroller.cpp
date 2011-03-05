@@ -176,7 +176,7 @@ void IrcController::disconnectNotify()
 
 void IrcController::handleSocketErrors( QAbstractSocket::SocketError error )
 {
-    m_connection->disconnectFromHost(); // or "abort()"?
+    m_connection->abort();  // reset socket
 
     switch ( error ) {
         case QAbstractSocket::ConnectionRefusedError: {
@@ -187,7 +187,7 @@ void IrcController::handleSocketErrors( QAbstractSocket::SocketError error )
         }
         case QAbstractSocket::RemoteHostClosedError: {
             qWarning() << "\e[0;33m" << m_connection->errorString() << ", trying to reconnect..\e[0m";
-            reconnect();
+            QTimer::singleShot( 3000, this, SLOT( reconnect() ) );
             break;
         }
         case QAbstractSocket::HostNotFoundError: {
@@ -202,7 +202,7 @@ void IrcController::handleSocketErrors( QAbstractSocket::SocketError error )
         }
         case QAbstractSocket::SocketTimeoutError: {
             qWarning() << "\e[0;33m" << m_connection->errorString() << ", trying to reconnect....\e[0m" ;
-            reconnect();
+            QTimer::singleShot( 3000, this, SLOT( reconnect() ) );
             #warning FIX ME crashes when i get this error and try to reconnect.
             break;
         }
