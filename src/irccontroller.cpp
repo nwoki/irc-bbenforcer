@@ -48,15 +48,45 @@ IrcController::IrcController( DbController *db )
     m_connection->connectToHost( m_ip, m_port, QIODevice::ReadWrite );
 }
 
+
 IrcController::~IrcController()
 {
     delete m_connection;
     delete m_dbController;
 }
 
+
+void IrcController::channelUsersWhois() const
+{
+    qDebug( "IrcController::channelUsersWhois" );
+    m_connection->write( "WHO " + m_chan.toUtf8() + end );
+}
+
+
 QTcpSocket *IrcController::connectionSocket()
 {
     return m_connection;
+}
+
+
+void IrcController::extractUserWhois( const QByteArray& serverText )
+{
+    qDebug( "IrcController::getChannelUsersInfo" );
+    qDebug() << "server text is: " << serverText;
+
+    // extract user data
+    QList<QByteArray>auxList = serverText.split( '#' );
+    QList<QByteArray>auxList2 = auxList.at( 1 ).split( ' ' );
+
+    WhoisStruct whoStr;
+    whoStr.nick = auxList2.at( 4 );
+    whoStr.ip = auxList2.at( 2 );
+    whoStr.userLogin = auxList2.at( 1 );
+
+    qDebug() << "USER IS: " << whoStr.nick << " " << whoStr.ip << " " << whoStr.userLogin;
+
+    // then add to db
+    m_dbController->addToTransition( whoStr.nick, whoStr.userLogin, whoStr.ip );
 }
 
 
@@ -224,6 +254,23 @@ void IrcController::reconnect()
 /***********************************
 **         IRC FUNCTIONS          **
 ***********************************/
+void IrcController::addOp( const QByteArray& user, const QList< QByteArray >& msg, const QByteArray& ip )
+{
+    if( !m_dbController->isAuthed( user, ip ) ) {   // not authed
+        sendNotAuthedMessage( user );
+        return;
+    }
+
+    if( msg.size() != 2 ) {         // wrong arguments
+        sendPrivateMessage( user, "wrong arguments arguments. '!addOp <nick>'" );
+        return;
+    }
+
+    /// TODO reactivate after having all users in transition table. This because new oplist db uses user login name and not the nick!
+    qDebug( "\e[1;31m TO DO \e[0m" );
+}
+
+
 void IrcController::auth( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip )
 {
     if( msg.size() > 2 || msg.size() == 1 ) {       // wrong parameters, abort
@@ -370,6 +417,26 @@ void IrcController::sendPrivateMessage( const QByteArray &nick, const QByteArray
 {
     m_connection->write( genPrivateMessage( nick, message ) );
 }
+
+
+void IrcController::whois( const QByteArray &nick )
+{
+    qDebug( "IrcController::whois" );
+    qDebug() << "requesting info for: " << nick;
+    QByteArray copy = nick;
+
+    if( copy.isEmpty() )    // want channel WHO
+        m_connection->write( "WHO " + m_chan.toUtf8() + end );
+    else {
+        QChar sym = copy.at( 0 );
+
+        if( sym == '+' || sym == '@' )
+            copy.remove( 0, 1 );
+
+        m_connection->write( "WHO " + copy + end );
+    }
+}
+
 
 
 /***********

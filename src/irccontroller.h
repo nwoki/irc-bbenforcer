@@ -28,11 +28,32 @@ class IrcController : public QObject
 {
     Q_OBJECT
 public:
+
+    struct WhoisStruct {
+//         WhoisStruct( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip );
+        QByteArray nick;
+        QByteArray userLogin;
+        QByteArray ip;
+    };
+
     IrcController( DbController *db );
     ~IrcController();
 
+    /**
+     * Requests whois for all users in channel
+     */
+    void channelUsersWhois() const;
+
     /** returns socket in 'connection' */
     QTcpSocket *connectionSocket();
+
+    /**
+     * retrieves the users ip and login info from the channel and adds
+     * them to the transition table
+     * Usually this is called on bot startup
+     * @param serverText server message containing all the channels users nicks
+     */
+    void extractUserWhois( const QByteArray &serverText );
 
     /**
      * parse irc commands given to the bot
@@ -99,6 +120,14 @@ private:
     /****************
     * irc functions *
     ****************/
+    /** add user to oplist in database
+     * @param user user request addOp
+     * @param msg msg given by user
+     * @param ip user ip
+     */
+    void addOp( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
+
+
     /**
      * auth user
      * @param user user to auth
@@ -170,7 +199,14 @@ private:
      * @param nick nick to send message to
      * @param message message to send
      */
-    void sendPrivateMessage( const QByteArray &nick, const QByteArray &message );               // send PVT message to nick
+    void sendPrivateMessage( const QByteArray &nick, const QByteArray &message );
+
+    /**
+     * gather whois info about a user or the current chan. If an empty value is
+     * passed a channel whois is launched asking for info on all users in the channel.
+     * @param nick nick to do whois lookup on
+     */
+    void whois( const QByteArray &nick = QByteArray() );
 
 
     /***********

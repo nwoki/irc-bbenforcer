@@ -63,18 +63,19 @@ QByteArray Brain::extractText( const QByteArray &text )
 QByteArray Brain::extractNick( const QByteArray &text )
 {
     QList< QByteArray >aux = text.split( '!' );
-    return aux.value( 0 ).right( aux.value( 0 ).size() - 1 ).trimmed();
+    return aux.value( 0 ).right( aux.value( 0 ).size() - 1 ).trimmed(); // eliminate the ":"
+//     return aux.value( 0 ).trimmed();
 }
 
 QByteArray Brain::extractUserLogin( const QByteArray& text )
 {
     QList< QByteArray >aux = text.split( '@' );
     QList< QByteArray >aux2 = aux.at( 0 ).split( '!' );
-    int len = aux2.at( 1 ).length();
+//     int len = aux2.at( 1 ).length();
 
-    // normal user has the "~" whilst bnc don't
-    if( aux2.at( 1 ).at( 0 ) == '~' )
-        return aux2.at( 1 ).right( len - 1 );
+//     // normal user has the "~" whilst bnc doesn't
+//     if( aux2.at( 1 ).at( 0 ) == '~' )
+//         return aux2.at( 1 ).right( len - 1 );
     return aux2.value( 1 );
 }
 
@@ -110,33 +111,47 @@ void Brain::parseGameData()
 //from here i dispatch irc lines with commands to corrispective classes
 void Brain::parseIrcData()
 {
-    while( m_ircControl->connectionSocket()->bytesAvailable() ) {
-        QByteArray serverText = m_ircControl->connectionSocket()->readLine( 2000 );
-        qDebug() << serverText;
+    // save all data from
+    while( !m_ircControl->connectionSocket()->atEnd()/*bytesAvailable()*/ ) {
+        m_ircData.append( m_ircControl->connectionSocket()->readLine( 5000 ) );
+//     }
+        qDebug() << "\e[1;31m " << m_ircData << "\e[0m";
+//         qDebug() << m_ircData;
 
         // start sending info to login and join
-        if( serverText.contains( "NOTICE AUTH :*** Found your hostname" ) ) {
+        if( m_ircData.contains( "NOTICE AUTH :*** Found your hostname" ) )
             m_ircControl->logIn();
-            return;
-        }
 
         // extra login send to make sure i get in channel
-        else if( serverText.contains( "NOTICE AUTH :*** No ident response" ) ) {
+        else if( m_ircData.contains( "NOTICE AUTH :*** No ident response" ) )
             m_ircControl->logIn();
-            return;
-        }
 
         // send back ping data
-        else if( serverText.contains( "PING" ) ) {
-            m_ircControl->pong( serverText );
-            return;
-        }
+        else if( m_ircData.contains( "PING" ) )
+            m_ircControl->pong( m_ircData );
+
+        // send whois for users in channel on startup
+        else if( m_ircData.contains( "End of /MOTD command" ) )
+            m_ircControl->channelUsersWhois();
+
+        // get user info from a "whois"
+        /// TODO find out what these mean, the + and @ are statuses, but what are the letters???
+        // i noticed these letters appear when asking WHO info. Still have to find out what they are
+        else if( m_ircData.contains( " H+ :3 " ) ||
+                 m_ircData.contains( " H@ :3 " ) ||
+                 m_ircData.contains( " Hx :3 " ) ||
+                 m_ircData.contains( " H :3 " )  ||
+                 m_ircData.contains( " G+ :3 " ) ||
+                 m_ircData.contains( " G@ :3 " ) ||
+                 m_ircData.contains( " Gx :3 " ) ||
+                 m_ircData.contains( " G :3 " ) )
+            m_ircControl->extractUserWhois( m_ircData );
 
         // on join, add user to transition database and check if banned
-        else if( serverText.contains( "JOIN" ) ) {
-            QByteArray user = extractNick( serverText );
-            QByteArray userLogin = extractUserLogin( serverText );
-            QByteArray ip = extractIp( serverText );
+        else if( m_ircData.contains( "JOIN" ) ) {
+            QByteArray user = extractNick( m_ircData );
+            QByteArray userLogin = extractUserLogin( m_ircData );
+            QByteArray ip = extractIp( m_ircData );
 
             m_dbControl->addToTransition( user, userLogin, ip );
 
@@ -145,23 +160,27 @@ void Brain::parseIrcData()
         }
 
         // control this after i get the "end of" line from server
-        else if( serverText.contains( "PRIVMSG" ) ) {           // someone's talking
-            QByteArray user = extractNick( serverText );
-            QByteArray msg = extractText( serverText );
-            QByteArray ip = extractIp( serverText );
+        else if( m_ircData.contains( "PRIVMSG" ) ) {           // someone's talking
+            QByteArray nick = extractNick( m_ircData );
+            QByteArray msg = extractText( m_ircData );
+            QByteArray ip = extractIp( m_ircData );
 
             if( msg.startsWith( '!' ) ) {                       // irc command is "!"
-                qDebug() << user << " ASKED FOR IRC BOT COMMAND with :" << msg;
-                m_ircControl->ircCommandParser( user, msg, ip );
+                qDebug() << nick << " ASKED FOR IRC BOT COMMAND with :" << msg;
+                m_ircControl->ircCommandParser( nick, msg, ip );
             }
 
             else if( msg.startsWith( '@' ) ) {                  // game server command is "@"
-                qDebug() << user << " ASKED FOR GAME BOT COMMAND with :" << msg;
-                m_gameControl->gameCommandParser( user, msg, ip );
+                qDebug() << nick << " ASKED FOR GAME BOT COMMAND with :" << msg;
+                m_gameControl->gameCommandParser( nick, msg, ip );
             }
 
             else                                                // nothing, normal msg
-                qDebug() << user << " SENT NORMAL MESSAGE.LOG IT SOMEWHERE!";
+                qDebug() << nick << " SENT NORMAL MESSAGE.LOG IT SOMEWHERE!";
+
         }
+
+        // clear data
+        m_ircData.clear();
     }
 }

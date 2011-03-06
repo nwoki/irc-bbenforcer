@@ -54,6 +54,8 @@ private:
     DbController *m_dbControl;
     GameController *m_gameControl;
     IrcController *m_ircControl;
+
+    QByteArray m_ircData;
 };
 
 #endif // BRAIN_H
