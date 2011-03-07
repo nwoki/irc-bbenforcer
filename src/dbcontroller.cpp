@@ -52,55 +52,6 @@ void DbController::addToBanned( const QByteArray& nick, const QByteArray& login,
 }
 
 
-void DbController::addToTransition( const QByteArray& nick, const QByteArray& userLogin, const QByteArray& ip )
-{
-    if( !openDb() )
-        return;
-    // check if already on database
-    QSqlQuery query;
-
-    if( !query.exec( "select id from transition where login='" + userLogin + "';" ) ) {
-        qWarning() << "\e[1;31m[FAIL]DbController::addToTransition failed to execute query" << query.lastError() << "\e[0m" ;
-        return;
-    }
-
-    // update ip for user if this has changed
-    if( query.next() ) {
-        qWarning() <<  "\e[0;33muser " << userLogin << " already in database\e[0m";
-
-        // check if ip has changed
-        if( query.exec( "select ip from transition where login='" + userLogin + "';" ) ) {
-            if( query.next() ) {
-                if( query.value( 0 ).toString() != ip ) {
-                    // update ip
-                    if( !query.exec( "update transition set nick='" + nick + "', ip='" + ip + "' where login='" + userLogin + "';" ) ) {
-                        qWarning() << "\e[1;31m[FAIL]DbController::addToTransition failed to execute query" << query.lastError() << "\e[0m" ;
-                        return;
-                    }
-                    else
-                        qDebug() <<  "\e[0;33mupdated nick and ip for user: " << userLogin << "\e[0m";
-                }
-            }
-        }
-        else {
-            qWarning() << "\e[1;31m[FAIL]DbController::addToTransition failed to execute query: " << query.lastError() << "\e[0m" ;
-            return;
-        }
-    }
-    // add to database
-    else {
-        qDebug() << "\e[0;33muser " << userLogin << " is not on database..Adding now..\e[0m";
-
-        if( !query.exec( "insert into transition( nick, login, ip ) values('" + nick + "','" + userLogin + "','" + ip + "');" ) ) {
-            qWarning() << "\e[1;31m[FAIL]DbController::addToTransition failed to execute query" << query.lastError() << "\e[0m" ;
-            return;
-        }
-        else
-            qDebug() <<  "\e[0;33muser: " << userLogin << " added to transition table \e[0m";
-    }
-}
-
-
 DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip )
 {
     // need to handle enum DATABASE_ERROR
@@ -119,7 +70,7 @@ DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArr
 
     QSqlQuery query;
 
-    if( !query.exec( "select * from oplist where nick='" + nick + "' and password='" + password + "';" ) ) {     // query failed
+    if( !query.exec( "select id from oplist where nick='" + nick + "' and password='" + password + "';" ) ) {     // query failed
         qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );
         close();
         return DATABASE_ERROR;
@@ -141,6 +92,7 @@ DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArr
 }
 
 
+/// TODO eliminate
 DbController::IrcUser DbController::getIrcUser( const QByteArray& userNick )
 {
     qDebug() << "DbController::getIrcUser looking for: " << userNick;
@@ -198,6 +150,7 @@ void DbController::createDatabaseFirstRun()
 
     QSqlQuery query;
     // oplist table
+    /// TODO use "userLogin" instead of nick
     if ( !query.exec( "create table oplist("
                       "id INTEGER PRIMARY KEY,"  // auotoincrement PK
                       "nick TEXT,"
@@ -207,6 +160,7 @@ void DbController::createDatabaseFirstRun()
     }
 
     // authed table
+    /// TODO use "userLogin" instead of nick
     if( !query.exec( "create table authed("
                      "id INTEGER PRIMARY KEY,"  // autoincrement PK
                      "nick TEXT,"
@@ -224,19 +178,6 @@ void DbController::createDatabaseFirstRun()
                      "author TEXT,"             // admin who banned the user
                      "date TEXT);" ) ) {        // date the user was banned
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( banned table )\e[0m" );
-        return;
-    }
-
-    // transition table
-    /* used to keep info on users who join the channel. This info is used by the "!ban" function to lookup info when
-     * an admin requests a ban
-     */
-    if( !query.exec( "create table transition("
-                    "id INTEGER PRIMARY KEY,"  // autoincrement PK
-                    "nick TEXT,"               // user nick
-                    "login TEXT,"              // user's login used for the network, if not logged in, this is the same as nick
-                    "ip TEXT);" ) ) {          // user ip
-        qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( transition table )\e[0m" );
         return;
     }
 

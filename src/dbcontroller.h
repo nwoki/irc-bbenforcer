@@ -40,6 +40,7 @@ public:
     /**
      * this struct is used to rappresent a user on an irc channel
      */
+    /// TODO eliminate
     struct IrcUser {
         QByteArray nick;
         QByteArray userLogin;
@@ -68,13 +69,6 @@ public:
      * @param date when the client was banned
      */
     void addToBanned( const QByteArray &nick, const QByteArray &login, const QByteArray &ip, const QByteArray &author, const QString &date );
-
-    /** adds user to transition database if not present, otherwise updates ip if neccessary
-     * @param nick nick of new user
-     * @param userLogin user login of new user
-     * @param ip ip of new user
-     */
-    void addToTransition( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip );
 
 
     /** auth's client to the bot giving admin priviledges

@@ -29,15 +29,28 @@ class IrcController : public QObject
     Q_OBJECT
 public:
 
-    struct WhoisStruct {
-//         WhoisStruct( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip );
-        QByteArray nick;
-        QByteArray userLogin;
-        QByteArray ip;
+    class WhoisStruct {
+        public:
+            WhoisStruct( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip )
+            : nick( nick )
+            , userLogin( userLogin )
+            , ip( ip )
+            {}
+
+            QByteArray nick;
+            QByteArray userLogin;
+            QByteArray ip;
     };
 
     IrcController( DbController *db );
     ~IrcController();
+
+    /**
+     * adds irc client to transition hash
+     * @param nick nick of the new ircClient
+     * @param ircClient class for the ircClient
+     */
+    void addToTransition( const QByteArray &nick, WhoisStruct *ircClient );
 
     /**
      * Requests whois for all users in channel
@@ -212,10 +225,11 @@ private:
     /***********
      * PRIVATE *
      **********/
-    void loadSettings();                /** load bot's irc settings from config file */
+    void loadSettings();                                /** load bot's irc settings from config file */
 
     QTcpSocket *m_connection;
     DbController *m_dbController;
+    QHash< QString, WhoisStruct* >m_transitionUsers;    /** keeps track of users that enter and leave the server */
 
     int m_port;
     QString m_chan, m_ip, m_nick;

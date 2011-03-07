@@ -64,18 +64,13 @@ QByteArray Brain::extractNick( const QByteArray &text )
 {
     QList< QByteArray >aux = text.split( '!' );
     return aux.value( 0 ).right( aux.value( 0 ).size() - 1 ).trimmed(); // eliminate the ":"
-//     return aux.value( 0 ).trimmed();
 }
 
 QByteArray Brain::extractUserLogin( const QByteArray& text )
 {
     QList< QByteArray >aux = text.split( '@' );
     QList< QByteArray >aux2 = aux.at( 0 ).split( '!' );
-//     int len = aux2.at( 1 ).length();
 
-//     // normal user has the "~" whilst bnc doesn't
-//     if( aux2.at( 1 ).at( 0 ) == '~' )
-//         return aux2.at( 1 ).right( len - 1 );
     return aux2.value( 1 );
 }
 
@@ -114,9 +109,8 @@ void Brain::parseIrcData()
     // save all data from
     while( !m_ircControl->connectionSocket()->atEnd()/*bytesAvailable()*/ ) {
         m_ircData.append( m_ircControl->connectionSocket()->readLine( 5000 ) );
-//     }
+
         qDebug() << "\e[1;31m " << m_ircData << "\e[0m";
-//         qDebug() << m_ircData;
 
         // start sending info to login and join
         if( m_ircData.contains( "NOTICE AUTH :*** Found your hostname" ) )
@@ -149,14 +143,14 @@ void Brain::parseIrcData()
 
         // on join, add user to transition database and check if banned
         else if( m_ircData.contains( "JOIN" ) ) {
-            QByteArray user = extractNick( m_ircData );
-            QByteArray userLogin = extractUserLogin( m_ircData );
-            QByteArray ip = extractIp( m_ircData );
+            IrcController::WhoisStruct *ircUser = new IrcController::WhoisStruct( extractNick( m_ircData )
+                                                                                , extractUserLogin( m_ircData )
+                                                                                , extractIp( m_ircData ) );
 
-            m_dbControl->addToTransition( user, userLogin, ip );
+            m_ircControl->addToTransition( ircUser->nick, ircUser );
 
-            if( m_dbControl->isBanned( userLogin, ip ) )
-                m_ircControl->loginBan( user, userLogin, ip );  // kick - ban the user!
+            if( m_dbControl->isBanned( ircUser->userLogin, ircUser->ip ) )
+                m_ircControl->loginBan( ircUser->nick, ircUser->userLogin, ircUser->ip );  // kick - ban the user!
         }
 
         // control this after i get the "end of" line from server

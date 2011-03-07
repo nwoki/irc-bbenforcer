@@ -56,6 +56,13 @@ IrcController::~IrcController()
 }
 
 
+void IrcController::addToTransition( const QByteArray &nick, WhoisStruct *ircClient )
+{
+    // in case the value already exists, it's overwritten
+    m_transitionUsers.insert( nick, ircClient );
+}
+
+
 void IrcController::channelUsersWhois() const
 {
     qDebug( "IrcController::channelUsersWhois" );
@@ -78,15 +85,12 @@ void IrcController::extractUserWhois( const QByteArray& serverText )
     QList<QByteArray>auxList = serverText.split( '#' );
     QList<QByteArray>auxList2 = auxList.at( 1 ).split( ' ' );
 
-    WhoisStruct whoStr;
-    whoStr.nick = auxList2.at( 4 );
-    whoStr.ip = auxList2.at( 2 );
-    whoStr.userLogin = auxList2.at( 1 );
+    WhoisStruct *whoStr = new WhoisStruct( auxList2.at( 4 ), auxList2.at( 1 ), auxList2.at( 2 ) );
 
-    qDebug() << "USER IS: " << whoStr.nick << " " << whoStr.ip << " " << whoStr.userLogin;
+    qDebug() << "\e[1;32mUSER IS: " << whoStr->nick << " " << whoStr->ip << " " << whoStr->userLogin << "\e[0m";
 
-    // then add to db
-    m_dbController->addToTransition( whoStr.nick, whoStr.userLogin, whoStr.ip );
+    // then add to transition users
+    addToTransition( whoStr->nick, whoStr );
 }
 
 
@@ -233,7 +237,7 @@ void IrcController::handleSocketErrors( QAbstractSocket::SocketError error )
         case QAbstractSocket::SocketTimeoutError: {
             qWarning() << "\e[0;33m" << m_connection->errorString() << ", trying to reconnect....\e[0m" ;
             QTimer::singleShot( 3000, this, SLOT( reconnect() ) );
-            #warning FIX ME crashes when i get this error and try to reconnect.
+            #warning FIX ME crashes when i get this error and try to reconnect. Does it?
             break;
         }
         default: {
@@ -306,27 +310,21 @@ void IrcController::ban( const QByteArray& user, const QList< QByteArray >& msg,
         return;
     }
 
-    // get client userLogin and ip from db
-    DbController::IrcUser userStruct = m_dbController->getIrcUser( msg.at( 1 )/*nick to ban*/ );
-
-    if( !userStruct.isValid() ) {
-        /// TODO implement what to do if info is invalid! tell user he sent wrong nick=?
-        qWarning( "\e[1;31mIrcController::ban invalid info. need to implement behaviour! \e[0m" );
-    }
+    WhoisStruct *userStruct = m_transitionUsers.value( msg.at( 1 )/* nick */ );
 
     // proceed with ban
     QByteArray cmd( "MODE " );
     cmd.append( m_chan );
-    cmd.append( " +b *!~" );
-    cmd.append( userStruct.userLogin );
+    cmd.append( " +b *!" );
+    cmd.append( userStruct->userLogin );
     cmd.append( "@" );
-    cmd.append( userStruct.ip );
+    cmd.append( userStruct->ip );
 
     // send to irc chan
     m_connection->write( cmd + end );
 
     // add to database
-    m_dbController->addToBanned( userStruct.nick, userStruct.userLogin, userStruct.ip, user, QDateTime::currentDateTime().toString( "dd-mm-yyyy hh:mm:ss" ) );
+    m_dbController->addToBanned( userStruct->nick, userStruct->userLogin, userStruct->ip, user, QDateTime::currentDateTime().toString( "dd-mm-yyyy hh:mm:ss" ) );
 }
 
 
@@ -334,7 +332,7 @@ void IrcController::botBan( const QByteArray& userLogin, const QByteArray& ip )
 {
     QByteArray cmd( "MODE " );
     cmd.append( m_chan );
-    cmd.append( " +b *!~" );
+    cmd.append( " +b *!" );
     cmd.append( userLogin );
     cmd.append( "@" );
     cmd.append( ip );
