@@ -72,11 +72,11 @@ public:
 
 
     /** auth's client to the bot giving admin priviledges
-     * @param nick nick of the user to auth
+     * @param user username to auth
      * @param password password of user to auth
      * @param ip of user to auth
      */
-    authMsg auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip );
+    authMsg auth( const QByteArray &user, const QByteArray &password, const QByteArray &ip );
 
     /**
      * retrieve info about a user from transition database
@@ -89,12 +89,12 @@ public:
      * @param nick nick of user that requests the authentication
      * @param ip ip of the user that requests the authentication
      */
-    bool isAuthed( const QByteArray &nick, const QByteArray &ip );
+    bool isAuthed( const QByteArray &user, const QByteArray &ip );
 
     bool isBanned( const QByteArray &userLogin, const QByteArray &ip );                                 /** checks if client is banned by irc bot */
 
 private:
-    bool addToAuthed( const QByteArray &nick, const QByteArray &ip );   /** add client to auth */
+    bool addToAuthed( const QByteArray &user, const QByteArray &ip );   /** add client to auth */
     void createDatabaseFirstRun();                                      /** creates authed and oplist tables */
     bool openDb();                                                      /** opens a connection to the database if there is none. Returns the status of the operation */
     void loadAdmins();                                                  /** loads admins to oplist table */

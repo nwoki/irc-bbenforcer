@@ -29,7 +29,7 @@ class IrcController : public QObject
     Q_OBJECT
 public:
 
-    class WhoisStruct {
+    struct WhoisStruct {
         public:
             WhoisStruct( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip )
             : nick( nick )
@@ -134,28 +134,28 @@ private:
     * irc functions *
     ****************/
     /** add user to oplist in database
-     * @param user user request addOp
+     * @param nick user request addOp
      * @param msg msg given by user
      * @param ip user ip
      */
-    void addOp( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
+    void addOp( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
 
 
     /**
      * auth user
-     * @param user user to auth
+     * @param nick nick to auth
      * @param msg msg given by user
      * @param ip user ip
      */
-    void auth( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
+    void auth( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
 
     /**
      * ban user
-     * @param user user requesting ban
+     * @param nick user requesting ban
      * @param msg msg given by user
      * @param ip user ip
      */
-    void ban( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
+    void ban( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
 
     /**
      * ban function used by bot( when auto-banning )
@@ -173,17 +173,17 @@ private:
 
     /**
      * print help message for user ( or send help file? )
-     * @param user user to send info to
+     * @param nick user to send info to
      */
-    void help( const QByteArray &user );
+    void help( const QByteArray &nick );
 
     /**
      * kick client
-     * @param user user requesting kick
+     * @param nick user requesting kick
      * @param msg message sent by user
      * @param ip ip of user requesting kick
      */
-    void kick( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip );
+    void kick( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
 
     /****************
     * bot functions *

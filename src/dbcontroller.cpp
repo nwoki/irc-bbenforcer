@@ -52,7 +52,7 @@ void DbController::addToBanned( const QByteArray& nick, const QByteArray& login,
 }
 
 
-DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArray &password, const QByteArray &ip )
+DbController::authMsg DbController::auth( const QByteArray &user, const QByteArray &password, const QByteArray &ip )
 {
     // need to handle enum DATABASE_ERROR
     qDebug( "DbController::auth" );
@@ -61,27 +61,27 @@ DbController::authMsg DbController::auth( const QByteArray &nick, const QByteArr
         return DATABASE_ERROR;
 
     // check to see if user is already authed
-    if( isAuthed( nick, ip ) ) {
-        qDebug() << nick << " IS ALREADY AUTHED!!";
+    if( isAuthed( user, ip ) ) {
+        qDebug() << user << " IS ALREADY AUTHED!!";
         return ALREADY_AUTHED;          // don't need to auth again
     }
 
-    qDebug() << nick << " IS NOT AUTHED!!";
+    qDebug() << user << " IS NOT AUTHED!!";
 
     QSqlQuery query;
 
-    if( !query.exec( "select id from oplist where nick='" + nick + "' and password='" + password + "';" ) ) {     // query failed
+    if( !query.exec( "select id from oplist where user='" + user + "' and password='" + password + "';" ) ) {     // query failed
         qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );
         close();
         return DATABASE_ERROR;
     }
 
     if( !query.next() ) {               // not on auth database
-        qWarning( "\e[0;33mDbController::auth %s is not on oplist\e[0m", qPrintable ( QString( nick ) ) );
+        qWarning( "\e[0;33mDbController::auth %s is not on oplist or wrong password \e[0m", qPrintable ( QString( user ) ) );
         return AUTH_FAIL;
     }
 
-    if( addToAuthed( nick, ip ) ) {     // add to authed table
+    if( addToAuthed( user, ip ) ) {     // add to authed table
         close();
         return AUTH_OK;
     }
@@ -121,7 +121,7 @@ DbController::IrcUser DbController::getIrcUser( const QByteArray& userNick )
 *      PRIVATE FUNCTIONS       *
 ********************************/
 
-bool DbController::addToAuthed( const QByteArray &nick, const QByteArray &ip )
+bool DbController::addToAuthed( const QByteArray &user, const QByteArray &ip )
 {
     qDebug( "DbController::addToAuthed" );
     if( !openDb() )
@@ -129,7 +129,7 @@ bool DbController::addToAuthed( const QByteArray &nick, const QByteArray &ip )
 
     QSqlQuery query;
 
-    if( !query.exec( "insert into authed( nick, ip ) values ('" + nick + "', '" + ip + "');" ) ) {
+    if( !query.exec( "insert into authed( user, ip ) values ('" + user + "', '" + ip + "');" ) ) {
         qWarning( "\e[1;31mDbController::addToAuthed can't add user to authed table\e[0m" );
         close();
         return false;
@@ -153,7 +153,7 @@ void DbController::createDatabaseFirstRun()
     /// TODO use "userLogin" instead of nick
     if ( !query.exec( "create table oplist("
                       "id INTEGER PRIMARY KEY,"  // auotoincrement PK
-                      "nick TEXT,"
+                      "user TEXT,"
                       "password TEXT);" ) ) {
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( oplist table )\e[0m" );
         return;
@@ -163,7 +163,7 @@ void DbController::createDatabaseFirstRun()
     /// TODO use "userLogin" instead of nick
     if( !query.exec( "create table authed("
                      "id INTEGER PRIMARY KEY,"  // autoincrement PK
-                     "nick TEXT,"
+                     "user TEXT,"
                      "ip TEXT);" ) ) {
         qWarning( "\e[1;31mDbController::createDatabaseFirstRun FAILED to execute query ( authed table )\e[0m" );
         return;
@@ -201,7 +201,7 @@ bool DbController::openDb()
 }
 
 
-bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
+bool DbController::isAuthed( const QByteArray &user, const QByteArray &ip )
 {
     qDebug( "DbController::isAuthed" );
     if( !openDb() )
@@ -209,7 +209,7 @@ bool DbController::isAuthed( const QByteArray &nick, const QByteArray &ip )
 
     QSqlQuery query;
 
-    if( !query.exec( "select id from authed where nick ='" + nick + "' and ip='" + ip + "';" ) ) {
+    if( !query.exec( "select id from authed where user ='" + user + "' and ip='" + ip + "';" ) ) {
         qWarning() << "\e[1;31mDb[FAIL]DbController::isAuthed FAILED to execute query" << query.lastError() << "\e[0m" ;
         return false;
     }
@@ -258,7 +258,7 @@ void DbController::loadAdmins()
         return;
     }
 
-    QString auxNick, auxPassword;
+    QString auxUser, auxPassword;
     QSettings settings( adminFile, QSettings::IniFormat );
     int size = settings.beginReadArray( "OPLIST" ); // size of settings
 
@@ -266,20 +266,20 @@ void DbController::loadAdmins()
 
         // get admins from config file
         settings.setArrayIndex( i );
-        auxNick = settings.value( "nick" ).toString();
+        auxUser = settings.value( "user" ).toString();
         auxPassword = settings.value( "password" ).toString();
 
         QSqlQuery query;
 
         // check existance on database
-        if( query.exec( "select nick from oplist where nick = '" + auxNick + "';" ) ) {
+        if( query.exec( "select user from oplist where user = '" + auxUser + "';" ) ) {
 
             if( query.next() )
-                qWarning( "\e[0;33m%s already in database\e[0m", qPrintable( auxNick ) );
+                qWarning( "\e[0;33m%s already in database\e[0m", qPrintable( auxUser ) );
             else {    //write to database
-                qDebug( "\e[0;33mnick( %s ) is not on database..Adding now..\e[0m", qPrintable( auxNick ) );
+                qDebug( "\e[0;33mnick( %s ) is not on database..Adding now..\e[0m", qPrintable( auxUser ) );
 
-                if( !query.exec( "insert into oplist( nick, password ) values('" + auxNick + "','" + auxPassword + "');" ) ) {
+                if( !query.exec( "insert into oplist( user, password ) values('" + auxUser + "','" + auxPassword + "');" ) ) {
                     qWarning() << "\e[1;31mDbController::loadAdmins FAILED to execute query" << query.lastError() << "\e[0m" ;
                     return;
                 }

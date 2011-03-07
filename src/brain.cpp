@@ -142,16 +142,20 @@ void Brain::parseIrcData()
             m_ircControl->extractUserWhois( m_ircData );
 
         // on join, add user to transition database and check if banned
-        else if( m_ircData.contains( "JOIN" ) ) {
+        else if( m_ircData.contains( "JOIN :" ) ) {
             IrcController::WhoisStruct *ircUser = new IrcController::WhoisStruct( extractNick( m_ircData )
                                                                                 , extractUserLogin( m_ircData )
                                                                                 , extractIp( m_ircData ) );
-
             m_ircControl->addToTransition( ircUser->nick, ircUser );
 
             if( m_dbControl->isBanned( ircUser->userLogin, ircUser->ip ) )
                 m_ircControl->loginBan( ircUser->nick, ircUser->userLogin, ircUser->ip );  // kick - ban the user!
         }
+
+//         // update user struct
+//         else if( m_ircData.contains( "NICK :" ) ) {
+//
+//         }
 
         // control this after i get the "end of" line from server
         else if( m_ircData.contains( "PRIVMSG" ) ) {           // someone's talking

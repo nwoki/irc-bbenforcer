@@ -85,6 +85,11 @@ void IrcController::extractUserWhois( const QByteArray& serverText )
     QList<QByteArray>auxList = serverText.split( '#' );
     QList<QByteArray>auxList2 = auxList.at( 1 ).split( ' ' );
 
+    if( auxList2.size() < 5 ) {
+        qDebug() <<  "\e[1;31m[ERROR] IrcController::extractUserWhois got a messed up line: '" << serverText << "' \e[0m;";
+        return;
+    }
+
     WhoisStruct *whoStr = new WhoisStruct( auxList2.at( 4 ), auxList2.at( 1 ), auxList2.at( 2 ) );
 
     qDebug() << "\e[1;32mUSER IS: " << whoStr->nick << " " << whoStr->ip << " " << whoStr->userLogin << "\e[0m";
@@ -94,7 +99,7 @@ void IrcController::extractUserWhois( const QByteArray& serverText )
 }
 
 
-void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip )
+void IrcController::ircCommandParser( const QByteArray &nick, const QByteArray &msg, const QByteArray &ip )
 {
     qDebug() << "MESSAGE I GET IS -> " << msg;
     QList< QByteArray > msgList = msg.split( ' ' ); // split message
@@ -102,13 +107,13 @@ void IrcController::ircCommandParser( const QByteArray &user, const QByteArray &
     QString command = msgList.at( 0 );              // command given by user
 
     if( command == "!help" )                        // print help
-        help( user );
+        help( nick );
     else if( command == "!auth" )                   // auth user ( !auth <password> )
-        auth( user, msgList, ip );
+        auth( nick, msgList, ip );
     else if( command == "!kick" )                   // !kick <nick> <reason>
-        kick( user, msgList, ip );
+        kick( nick, msgList, ip );
     else if( command == "!ban" )                    // !ban <nick> <reason>
-        ban( user, msgList, ip );
+        ban( nick, msgList, ip );
 }
 
 
@@ -258,15 +263,17 @@ void IrcController::reconnect()
 /***********************************
 **         IRC FUNCTIONS          **
 ***********************************/
-void IrcController::addOp( const QByteArray& user, const QList< QByteArray >& msg, const QByteArray& ip )
+void IrcController::addOp( const QByteArray& nick, const QList< QByteArray >& msg, const QByteArray& ip )
 {
-    if( !m_dbController->isAuthed( user, ip ) ) {   // not authed
-        sendNotAuthedMessage( user );
+    WhoisStruct *ircUser = m_transitionUsers.value( nick );
+
+    if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) {   // not authed
+        sendNotAuthedMessage( nick );
         return;
     }
 
     if( msg.size() != 2 ) {         // wrong arguments
-        sendPrivateMessage( user, "wrong arguments arguments. '!addOp <nick>'" );
+        sendPrivateMessage( nick, "wrong arguments arguments. '!addOp <nick>'" );
         return;
     }
 
@@ -275,41 +282,46 @@ void IrcController::addOp( const QByteArray& user, const QList< QByteArray >& ms
 }
 
 
-void IrcController::auth( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip )
+void IrcController::auth( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip )
 {
-    if( msg.size() > 2 || msg.size() == 1 ) {       // wrong parameters, abort
-        sendPrivateMessage( user, "wrong parameters. send me-> '!auth <password>'" );
+    WhoisStruct *ircUser = m_transitionUsers.value( nick );
+
+    if( msg.size() > 2 || msg.size() == 1 || ircUser == 0 ) {       // wrong parameters, abort
+        sendPrivateMessage( nick, "wrong parameters. send me-> '!auth <password>'" );
         return;
     }
     else {
         DbController::authMsg response;
 
-        response = m_dbController->auth( user, msg.at( 1 )/*<- password*/, ip );
+        response = m_dbController->auth( ircUser->userLogin, msg.at( 1 )/*<- password*/, ip );
 
         if( response == DbController::ALREADY_AUTHED )
-            sendPrivateMessage( user, "you're already authed!" );
+            sendPrivateMessage( nick, "you're already authed!" );
         else if( response == DbController::AUTH_FAIL )
-            sendPrivateMessage( user, "NOT AUTHED! wrong username/password" );
+            sendPrivateMessage( nick, "NOT AUTHED! wrong username/password" );
         else if( response == DbController::AUTH_OK )
-            sendPrivateMessage( user, "you have been authenticated to ioQIC" );
+            sendPrivateMessage( nick, "you have been authenticated to ioQIC" );
         else
-            sendPrivateMessage( user, "problem with database, please contact an administrator" );
+            sendPrivateMessage( nick, "problem with database, please contact an administrator" );
     }
 }
 
 
-void IrcController::ban( const QByteArray& user, const QList< QByteArray >& msg, const QByteArray& ip )
+void IrcController::ban( const QByteArray& nick, const QList< QByteArray >& msg, const QByteArray& ip )
 {
-    if( !m_dbController->isAuthed( user, ip ) ) {   // not authed
-        sendNotAuthedMessage( user );
+    WhoisStruct *ircUser = m_transitionUsers.value( nick );     // user requesting
+
+    if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) { // not authed
+        sendNotAuthedMessage( nick );
         return;
     }
 
     if( msg.size() == 1 ) {         // too few arguments
-        sendPrivateMessage( user, "too few arguments. '!ban <nick>'" );
+        sendPrivateMessage( nick, "too few arguments. '!ban <nick>'" );
         return;
     }
 
+    // user to ban
     WhoisStruct *userStruct = m_transitionUsers.value( msg.at( 1 )/* nick */ );
 
     // proceed with ban
@@ -324,7 +336,7 @@ void IrcController::ban( const QByteArray& user, const QList< QByteArray >& msg,
     m_connection->write( cmd + end );
 
     // add to database
-    m_dbController->addToBanned( userStruct->nick, userStruct->userLogin, userStruct->ip, user, QDateTime::currentDateTime().toString( "dd-mm-yyyy hh:mm:ss" ) );
+    m_dbController->addToBanned( userStruct->nick, userStruct->userLogin, userStruct->ip, nick, QDateTime::currentDateTime().toString( "dd-mm-yyyy hh:mm:ss" ) );
 }
 
 
@@ -349,22 +361,24 @@ void IrcController::botKick( const QByteArray& nick, const QString& reason )
 }
 
 
-void IrcController::help( const QByteArray &user )
+void IrcController::help( const QByteArray &nick )
 {
     qDebug( "IrcController::ircCommandParser::help" );
-    sendPrivateMessage( user, "-> http://2s2h.com/ioQIC-BBEnforcer/ioQIC-BBEnforcer-README" );
+    sendPrivateMessage( nick, "-> http://2s2h.com/ioQIC-BBEnforcer/ioQIC-BBEnforcer-README" );
 }
 
 
-void IrcController::kick( const QByteArray &user, const QList< QByteArray > &msg, const QByteArray &ip )
+void IrcController::kick( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip )
 {
-    if( !m_dbController->isAuthed( user, ip ) ) {   // not authed
-        sendNotAuthedMessage( user );
+    WhoisStruct *ircUser = m_transitionUsers.value( nick );
+
+    if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) {   // not authed
+        sendNotAuthedMessage( nick );
         return;
     }
 
     if( msg.size() == 1 ) {         // too few arguments
-        sendPrivateMessage( user, "too few arguments. '!kick <nick> <reason>'" );
+        sendPrivateMessage( nick, "too few arguments. '!kick <nick> <reason>'" );
         return;
     }
 
