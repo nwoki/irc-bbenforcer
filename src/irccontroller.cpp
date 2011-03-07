@@ -78,15 +78,19 @@ QTcpSocket *IrcController::connectionSocket()
 
 void IrcController::extractUserWhois( const QByteArray& serverText )
 {
-    qDebug( "IrcController::getChannelUsersInfo" );
+    qDebug( "IrcController::extractUserWhois" );
     qDebug() << "server text is: " << serverText;
 
     // extract user data
     QList<QByteArray>auxList = serverText.split( '#' );
-    QList<QByteArray>auxList2 = auxList.at( 1 ).split( ' ' );
+    if( auxList.count() < 2 ) {
+        qDebug() <<  "\e[1;31m[ERROR] IrcController::extractUserWhois got a messed up line( auxList ): '" << serverText << "' \e[0m;";
+        return;
+    }
 
-    if( auxList2.size() < 5 ) {
-        qDebug() <<  "\e[1;31m[ERROR] IrcController::extractUserWhois got a messed up line: '" << serverText << "' \e[0m;";
+    QList<QByteArray>auxList2 = auxList.at( 1 ).split( ' ' );
+    if( auxList2.count() < 5 ) {
+        qDebug() <<  "\e[1;31m[ERROR] IrcController::extractUserWhois got a messed up line( auxList2 ): '" << serverText << "' \e[0m;";
         return;
     }
 
@@ -114,6 +118,8 @@ void IrcController::ircCommandParser( const QByteArray &nick, const QByteArray &
         kick( nick, msgList, ip );
     else if( command == "!ban" )                    // !ban <nick> <reason>
         ban( nick, msgList, ip );
+    else if( command == "!op" )                     // !op <nick> <new password>
+        addOp( nick, msgList, ip );
 }
 
 
@@ -265,20 +271,40 @@ void IrcController::reconnect()
 ***********************************/
 void IrcController::addOp( const QByteArray& nick, const QList< QByteArray >& msg, const QByteArray& ip )
 {
+    if( msg.size() != 3 ) {         // wrong arguments
+        sendPrivateMessage( nick, "wrong arguments arguments. '!addOp <nick> <password>'" );
+        return;
+    }
+
     WhoisStruct *ircUser = m_transitionUsers.value( nick );
+
+    if( ircUser == 0 ) {
+        qDebug() << "\e[1;31m[ERROR] IrcController::addOp can't find WhoisStruct for nick : " << nick << "\e[0m";
+        sendPrivateMessage( nick, "error looking up your info. Please contact an admin" );
+        return;
+    }
 
     if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) {   // not authed
         sendNotAuthedMessage( nick );
         return;
     }
 
-    if( msg.size() != 2 ) {         // wrong arguments
-        sendPrivateMessage( nick, "wrong arguments arguments. '!addOp <nick>'" );
+    WhoisStruct *newAdmin = m_transitionUsers.value( msg.at( 1 ) );
+
+    if( newAdmin == 0 ) {       // don't have info
+        qDebug() << "\e[1;31m[ERROR] IrcController::addOp can't find WhoisStruct for nick : " << msg.at( 1 ) << "\e[0m";
+        sendPrivateMessage( nick, "error looking up info. Please contact an admin" );
         return;
     }
 
-    /// TODO reactivate after having all users in transition table. This because new oplist db uses user login name and not the nick!
-    qDebug( "\e[1;31m TO DO \e[0m" );
+    DbController::opMsg result = m_dbController->addToOplist( newAdmin->userLogin, msg.at( 2 ) );
+
+    if( result == DbController::OP_OK )
+        sendPrivateMessage( nick, "user '" + newAdmin->userLogin + "' added to oplist" );
+    else if( result == DbController::ALREADY_OPPED )
+        sendPrivateMessage( nick, "user " + newAdmin->userLogin + " is already in the oplist table" );
+    else if( result == DbController::OP_DATABASE_ERROR )
+        sendPrivateMessage( nick, "ERROR WITH DATABASE when adding: " + newAdmin->userLogin + " to oplist" );
 }
 
 

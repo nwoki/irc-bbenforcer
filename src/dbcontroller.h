@@ -24,11 +24,17 @@
 class DbController : public QSqlDatabase
 {
 public:
+    enum opMsg {
+        ALREADY_OPPED,      /* value is already present in database */
+        OP_OK,              /* op procedure went well */
+        OP_DATABASE_ERROR   /* database error ( still need to handle? ) */
+    };
+
     enum authMsg {
         ALREADY_AUTHED, /* already authed */
         AUTH_OK,        /* auth procedure went well */
         AUTH_FAIL,      /* auth procedure failed( wrong username or password ) */
-        DATABASE_ERROR  /* still need to handle this one */
+        AUTH_DATABASE_ERROR  /* still need to handle this one */
     };
 
     enum table {
@@ -71,6 +77,14 @@ public:
     void addToBanned( const QByteArray &nick, const QByteArray &login, const QByteArray &ip, const QByteArray &author, const QString &date );
 
 
+    /**
+     * add user to oplist table
+     * @param userLogin new admin login
+     * @param password new admin pass
+     */
+    opMsg addToOplist( const QByteArray &userLogin, const QByteArray &password );
+
+
     /** auth's client to the bot giving admin priviledges
      * @param user username to auth
      * @param password password of user to auth
@@ -95,6 +109,7 @@ public:
 
 private:
     bool addToAuthed( const QByteArray &user, const QByteArray &ip );   /** add client to auth */
+    QByteArray cleanUserName( const QByteArray &dirtyUserName );        /** returns clean username without the "~" */
     void createDatabaseFirstRun();                                      /** creates authed and oplist tables */
     bool openDb();                                                      /** opens a connection to the database if there is none. Returns the status of the operation */
     void loadAdmins();                                                  /** loads admins to oplist table */

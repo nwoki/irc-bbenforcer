@@ -35,6 +35,7 @@ Game commands are specified by putting a "@" in front.
 !auth    <password>         - authenticates user with given <password> to the bot
 !ban     <nick>             - bans <nick> from channel
 !kick    <nick> <reason>    - kicks <nick> with given <reason>
+!op      <nick> <password>  - adds user <nick> to the admins with <password>
 
 **GAME**
 @bigtext <text>             - send <text> as bigtext to server

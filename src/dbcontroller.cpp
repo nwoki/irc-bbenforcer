@@ -52,42 +52,68 @@ void DbController::addToBanned( const QByteArray& nick, const QByteArray& login,
 }
 
 
+DbController::opMsg DbController::addToOplist( const QByteArray& userLogin, const QByteArray& password )
+{
+    // check user doesn't already exist
+    QByteArray userToAdd = cleanUserName( userLogin );
+    QSqlQuery query;
+
+    if( !query.exec( "select id from oplist where user = '" + userToAdd + "';" ) ) {
+        qWarning() << "\e[1;31m[FAIL]DbController::addToOplist failed to execute query" << query.lastError() << "\e[0m" ;
+        return OP_DATABASE_ERROR;
+    }
+
+    if( query.next() )          // already exists
+        return ALREADY_OPPED;
+    else {                      // add user
+        qDebug() << "adding new user to oplist: " << userToAdd;
+        if( !query.exec( "insert into oplist( user, password ) values('" + userToAdd + "','" + password + "');" ) ) {
+            qWarning() << "\e[1;31m[FAIL]DbController::addToOplist failed to execute query" << query.lastError() << "\e[0m" ;
+            return OP_DATABASE_ERROR;
+        }
+        return OP_OK;
+    }
+}
+
+
 DbController::authMsg DbController::auth( const QByteArray &user, const QByteArray &password, const QByteArray &ip )
 {
     // need to handle enum DATABASE_ERROR
     qDebug( "DbController::auth" );
 
     if( !openDb() )
-        return DATABASE_ERROR;
+        return AUTH_DATABASE_ERROR;
+
+    QByteArray userCp = cleanUserName( user );
 
     // check to see if user is already authed
-    if( isAuthed( user, ip ) ) {
-        qDebug() << user << " IS ALREADY AUTHED!!";
+    if( isAuthed( userCp, ip ) ) {
+        qDebug() << userCp << " IS ALREADY AUTHED!!";
         return ALREADY_AUTHED;          // don't need to auth again
     }
 
-    qDebug() << user << " IS NOT AUTHED!!";
+    qDebug() << userCp << " IS NOT AUTHED!!";
 
     QSqlQuery query;
 
-    if( !query.exec( "select id from oplist where user='" + user + "' and password='" + password + "';" ) ) {     // query failed
+    if( !query.exec( "select id from oplist where user='" + userCp + "' and password='" + password + "';" ) ) {     // query failed
         qWarning( "\e[1;31mDbController::auth FAILED to execute query \e[0m" );
         close();
-        return DATABASE_ERROR;
+        return AUTH_DATABASE_ERROR;
     }
 
     if( !query.next() ) {               // not on auth database
-        qWarning( "\e[0;33mDbController::auth %s is not on oplist or wrong password \e[0m", qPrintable ( QString( user ) ) );
+        qWarning( "\e[0;33mDbController::auth %s is not on oplist or wrong password \e[0m", qPrintable ( QString( userCp ) ) );
         return AUTH_FAIL;
     }
 
-    if( addToAuthed( user, ip ) ) {     // add to authed table
+    if( addToAuthed( userCp, ip ) ) {     // add to authed table
         close();
         return AUTH_OK;
     }
     else{
         close();
-        return DATABASE_ERROR;
+        return AUTH_DATABASE_ERROR;
     }
 }
 
@@ -139,6 +165,16 @@ bool DbController::addToAuthed( const QByteArray &user, const QByteArray &ip )
         return true;
     }
 }
+
+
+QByteArray DbController::cleanUserName( const QByteArray& dirtyUserName )
+{
+    QByteArray aux = dirtyUserName;
+    if( aux.at( 0 ) == '~' )    // strip useless chars from user ( ex: the "~" sign that sometimes is add by irc server )
+        aux = dirtyUserName.right( dirtyUserName.length() - 1 );
+    return aux;
+}
+
 
 void DbController::createDatabaseFirstRun()
 {
@@ -207,9 +243,10 @@ bool DbController::isAuthed( const QByteArray &user, const QByteArray &ip )
     if( !openDb() )
         return false;
 
+    QByteArray userCp = cleanUserName( user );
     QSqlQuery query;
 
-    if( !query.exec( "select id from authed where user ='" + user + "' and ip='" + ip + "';" ) ) {
+    if( !query.exec( "select id from authed where user ='" + userCp + "' and ip='" + ip + "';" ) ) {
         qWarning() << "\e[1;31mDb[FAIL]DbController::isAuthed FAILED to execute query" << query.lastError() << "\e[0m" ;
         return false;
     }
