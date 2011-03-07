@@ -108,6 +108,14 @@ public:
      */
     void sendLineToUser( const QByteArray &nick, const QByteArray &line );
 
+
+    /**
+     * updates the user info on nick change
+     * @param oldNick nick before change
+     * @param line irc line containing ip and new nick
+     */
+    void updateUserStruct( const QByteArray &oldNick, const QByteArray &line );
+
 public slots:
     /**
      * slot used to send messages to user from other classes

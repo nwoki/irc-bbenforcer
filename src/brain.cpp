@@ -106,6 +106,8 @@ void Brain::parseGameData()
 //from here i dispatch irc lines with commands to corrispective classes
 void Brain::parseIrcData()
 {
+    QMap< QString, QString > ircSettings = m_ircControl->ircSettings();
+
     // save all data from
     while( !m_ircControl->connectionSocket()->atEnd()/*bytesAvailable()*/ ) {
         m_ircData.append( m_ircControl->connectionSocket()->readLine( 5000 ) );
@@ -141,8 +143,8 @@ void Brain::parseIrcData()
                  m_ircData.contains( " G :3 " ) )
             m_ircControl->extractUserWhois( m_ircData );
 
-        // on join, add user to transition database and check if banned
-        else if( m_ircData.contains( "JOIN :" ) ) {
+        // on join, add user to transition and check if banned
+        else if( m_ircData.contains( "JOIN "  + ircSettings.value( "chan" ).toUtf8() ) ) {
             IrcController::WhoisStruct *ircUser = new IrcController::WhoisStruct( extractNick( m_ircData )
                                                                                 , extractUserLogin( m_ircData )
                                                                                 , extractIp( m_ircData ) );
@@ -152,10 +154,9 @@ void Brain::parseIrcData()
                 m_ircControl->loginBan( ircUser->nick, ircUser->userLogin, ircUser->ip );  // kick - ban the user!
         }
 
-//         // update user struct
-//         else if( m_ircData.contains( "NICK :" ) ) {
-//
-//         }
+        // update user struct
+        else if( m_ircData.contains( "NICK :" ) )
+            m_ircControl->updateUserStruct( extractNick( m_ircData ), extractText( m_ircData ) );
 
         // control this after i get the "end of" line from server
         else if( m_ircData.contains( "PRIVMSG" ) ) {           // someone's talking

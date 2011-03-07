@@ -59,7 +59,16 @@ IrcController::~IrcController()
 void IrcController::addToTransition( const QByteArray &nick, WhoisStruct *ircClient )
 {
     // in case the value already exists, it's overwritten
+    qDebug( "IrcController::addToTransition" );
+    qDebug() << "adding user: " << nick;
     m_transitionUsers.insert( nick, ircClient );
+
+    // DEBUG outputs all users in transition hash
+//     QHash<QString,WhoisStruct*>::const_iterator it = m_transitionUsers.constBegin();
+//     while( it != m_transitionUsers.constEnd() ) {
+//         qDebug() << "user: " << it.key();
+//         it++;
+//     }
 }
 
 
@@ -183,6 +192,29 @@ void IrcController::pong( const QByteArray &pingData )
 void IrcController::sendLineToUser( const QByteArray& nick, const QByteArray& line )
 {
     sendPrivateMessage( nick, line );
+}
+
+
+void IrcController::updateUserStruct( const QByteArray& oldNick, const QByteArray& line )
+{
+    qDebug( "IrcController::updateUserStruct" );
+
+    QList<QByteArray>msg = line.split( ':' );
+    qDebug() << "Old nick -> " << oldNick << " new nick " << msg.last();
+
+    WhoisStruct *auxStruct = m_transitionUsers.value( oldNick );
+
+    if( auxStruct == 0 ) {
+        qDebug() << "\e[1;31m[ERROR] IrcController::addOp can't find WhoisStruct for nick : " << oldNick << "\e[0m";
+        sendPrivateMessage( msg.last(), "error looking up your info. Please contact an admin" );
+        return;
+    }
+
+    WhoisStruct *newStruct = new WhoisStruct( msg.last()
+                                            , auxStruct->userLogin
+                                            , auxStruct->ip );
+    m_transitionUsers.remove( oldNick );            // delete old record
+    addToTransition( newStruct->nick, newStruct );  // add new record
 }
 
 
