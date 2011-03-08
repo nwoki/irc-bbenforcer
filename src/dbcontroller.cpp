@@ -143,6 +143,91 @@ DbController::IrcUser DbController::getIrcUser( const QByteArray& userNick )
 }
 
 
+bool DbController::isAuthed( const QByteArray &user, const QByteArray &ip )
+{
+    qDebug( "DbController::isAuthed" );
+    if( !openDb() )
+        return false;
+
+    QByteArray userCp = cleanUserName( user );
+    QSqlQuery query;
+
+    if( !query.exec( "select id from authed where user ='" + userCp + "' and ip='" + ip + "';" ) ) {
+        qWarning() << "\e[1;31mDb[FAIL]DbController::isAuthed FAILED to execute query" << query.lastError() << "\e[0m" ;
+        return false;
+    }
+
+    if( query.next() )  // found value
+        return true;
+    else                // no value found
+        return false;
+}
+
+
+bool DbController::isBanned( const QByteArray& userLogin, const QByteArray& ip )
+{
+    Q_UNUSED( ip );
+    /// NOTICE for now i just check user login name. If this is not sufficient, i'll add the ip to the search criteria
+
+    qDebug( "DbController::isBanned" );
+    if( !openDb() ) {
+        qWarning( "\e[1;31m[FAIL]DbController::isBanned FAILED to open database. Can't verify if user is banned or not \e[0m" );
+        return false;
+    }
+
+    QSqlQuery query;
+    if( !query.exec( "select id from banned where login='" + userLogin + "';" ) ) {
+        qWarning() << "\e[1;31mDb[FAIL]DbController::isBanned FAILED to execute query" << query.lastError() << "\e[0m" ;
+        return false;
+    }
+
+    if( query.next() ) {  // user is banned
+        qDebug("user is banned");
+        return true;
+    }
+    else {
+        qDebug( "user is NOT banned " );
+        return false;
+    }
+}
+
+
+bool DbController::removeFromOplist( const QByteArray& user )
+{
+    qDebug( "DbController::removeFromOplist" );
+
+    // clean username
+    QByteArray userCp = cleanUserName( user );
+
+    if( !openDb() ) {
+        qWarning( "\e[1;31m[FAIL]DbController::removeFromOplist FAILED to open database. Can't verify if user is banned or not \e[0m" );
+        return false;
+    }
+
+    QSqlQuery query;
+    if( !query.exec( "select id from oplist where user='" + userCp + "';" ) ) {
+        qWarning() << "\e[1;31mDb[FAIL]DbController::removeFromOplist FAILED to execute query" << query.lastError() << "\e[0m" ;
+        return false;
+    }
+
+    if( query.next() ) {    // found user
+        if( !query.exec( "delete from oplist where user='" + userCp + "';" ) ) {
+            qWarning() << "\e[1;31mDb[FAIL]DbController::removeFromOplist FAILED to execute query" << query.lastError() << "\e[0m" ;
+            return false;
+        }
+
+        // delete from authed
+        if( !query.exec( "delete from authed where user='" + userCp + "';" ) ) {
+            qWarning() << "\e[1;31mDb[FAIL]DbController::removeFromOplist FAILED to execute query" << query.lastError() << "\e[0m" ;
+            return false;
+        }
+
+        return true;
+    }
+    return false;
+}
+
+
 /*******************************
 *      PRIVATE FUNCTIONS       *
 ********************************/
@@ -234,55 +319,6 @@ bool DbController::openDb()
     }
 
     return dbStatusOpen;
-}
-
-
-bool DbController::isAuthed( const QByteArray &user, const QByteArray &ip )
-{
-    qDebug( "DbController::isAuthed" );
-    if( !openDb() )
-        return false;
-
-    QByteArray userCp = cleanUserName( user );
-    QSqlQuery query;
-
-    if( !query.exec( "select id from authed where user ='" + userCp + "' and ip='" + ip + "';" ) ) {
-        qWarning() << "\e[1;31mDb[FAIL]DbController::isAuthed FAILED to execute query" << query.lastError() << "\e[0m" ;
-        return false;
-    }
-
-    if( query.next() )  // found value
-        return true;
-    else                // no value found
-        return false;
-}
-
-
-bool DbController::isBanned( const QByteArray& userLogin, const QByteArray& ip )
-{
-    Q_UNUSED( ip );
-    /// NOTICE for now i just check user login name. If this is not sufficient, i'll add the ip to the search criteria
-
-    qDebug( "DbController::isBanned" );
-    if( !openDb() ) {
-        qWarning( "\e[1;31m[FAIL]DbController::isBanned FAILED to open database. Can't verify if user is banned or not \e[0m" );
-        return false;
-    }
-
-    QSqlQuery query;
-    if( !query.exec( "select id from banned where login='" + userLogin + "';" ) ) {
-        qWarning() << "\e[1;31mDb[FAIL]DbController::isBanned FAILED to execute query" << query.lastError() << "\e[0m" ;
-        return false;
-    }
-
-    if( query.next() ) {  // user is banned
-        qDebug("user is banned");
-        return true;
-    }
-    else {
-        qDebug( "user is NOT banned " );
-        return false;
-    }
 }
 
 

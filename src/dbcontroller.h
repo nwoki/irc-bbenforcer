@@ -92,11 +92,13 @@ public:
      */
     authMsg auth( const QByteArray &user, const QByteArray &password, const QByteArray &ip );
 
+
     /**
      * retrieve info about a user from transition database
      * @param userNick user nick to search database for
      */
     IrcUser getIrcUser( const QByteArray &userNick );
+
 
     /**
      * checks if client is authed
@@ -105,7 +107,22 @@ public:
      */
     bool isAuthed( const QByteArray &user, const QByteArray &ip );
 
-    bool isBanned( const QByteArray &userLogin, const QByteArray &ip );                                 /** checks if client is banned by irc bot */
+
+    /**
+     * checks if client is banned by irc bot
+     * @param userLogin user
+     * @param user ip
+     */
+    bool isBanned( const QByteArray &userLogin, const QByteArray &ip );
+
+
+    /**
+     * removes user from oplist and authed table in case the user was authed
+     * when this command was given
+     * @param user user to deop
+     */
+    bool removeFromOplist( const QByteArray &user );
+
 
 private:
     bool addToAuthed( const QByteArray &user, const QByteArray &ip );   /** add client to auth */

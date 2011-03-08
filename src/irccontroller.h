@@ -146,6 +146,7 @@ private:
      */
     void auth( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
 
+
     /**
      * ban user
      * @param nick user requesting ban
@@ -154,12 +155,14 @@ private:
      */
     void ban( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
 
+
     /**
      * ban function used by bot( when auto-banning )
      * @param userLogin login name to banned
      * @param ip ip to ban
      */
     void botBan( const QByteArray &userLogin, const QByteArray &ip );
+
 
     /**
      * kick function used by the bot( when kick-banning )
@@ -168,11 +171,22 @@ private:
      */
     void botKick( const QByteArray &nick, const QString &reason );
 
+
+    /**
+     * deop user from database and auth table
+     * @param nick user requesting kick
+     * @param msg message sent by user
+     * @param ip ip of user requesting kick
+     */
+    void deop( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+
+
     /**
      * print help message for user ( or send help file? )
      * @param nick user to send info to
      */
     void help( const QByteArray &nick );
+
 
     /**
      * kick client

@@ -130,6 +130,8 @@ void IrcController::ircCommandParser( const QByteArray &nick, const QByteArray &
         ban( nick, msgList, ip );
     else if( command == "!op" )                     // !op <nick> <new password>
         addOp( nick, msgList, ip );
+    else if( command == "!deop" )                   // !deop <nick>
+        deop( nick, msgList, ip );
 }
 
 
@@ -406,6 +408,36 @@ void IrcController::botKick( const QByteArray& nick, const QString& reason )
     QByteArray cmd( "KICK " );
     cmd.append( m_chan + " " + nick + " :" + reason + end );
     m_connection->write( cmd + end );
+}
+
+
+void IrcController::deop(const QByteArray& nick, const QList< QByteArray >& msg, const QByteArray& ip)
+{
+    // user requesting command
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+
+    if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) { // not authed
+        sendNotAuthedMessage( nick );
+        return;
+    }
+
+    if( msg.size() != 2 ) { // wrong arguments
+        sendPrivateMessage( nick, "wrong arguments. [usage]'!deop <nick>'" );
+        return;
+    }
+
+    // get user to deop
+    ircUser = m_ircUsers->user( msg.at( 1 ) );
+
+    if( ircUser != 0 ) {
+        if( !m_dbController->removeFromOplist( ircUser->userLogin ) )
+            sendPrivateMessage( nick, "ERROR: couldn't remove user from oplist" );
+        else
+            sendPrivateMessage( nick, "user removed successfully from database" );
+    }
+    // can't find user info
+    else
+        sendPrivateMessage( nick, "can't find user info for " + msg.at( 1 ) );
 }
 
 
