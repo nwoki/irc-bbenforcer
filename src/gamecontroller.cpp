@@ -70,6 +70,10 @@ void GameController::gameCommandParser( const QByteArray& nick, const QByteArray
         status( nick, ip );
     else if( cmd == "@config" )                 // exec config file
         execConfig( nick, ip, msgList );
+    else if( cmd == "@restart" )                // restart game
+        restart( nick, ip );
+    else if( cmd == "@reload" )                 // reload game
+        reload( nick, ip );
 }
 
 
@@ -109,8 +113,7 @@ void GameController::bigText( const QByteArray& nick, const QByteArray& ip, cons
     if( msgList.count() > 1 ) {
     QByteArray bigtext;
         if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
-            QByteArray cmd( RCON_START );
-            cmd.append( m_rconPass );
+            QByteArray cmd = cmdBegin();
             cmd.append( " bigtext " );
 
             bigtext.append( '"' );
@@ -139,8 +142,7 @@ void GameController::execConfig( const QByteArray& nick, const QByteArray& ip, c
 
     if( msgList.count() == 2 ) {
         if( m_db->isAuthed( ircUser->userLogin, ip ) ) {
-            QByteArray cmd( RCON_START );
-            cmd.append( m_rconPass );
+            QByteArray cmd = cmdBegin();
             cmd.append( " exec " );
             cmd.append( msgList.last() );   // config file
             m_socket->write( cmd );
@@ -171,8 +173,7 @@ void GameController::gravity( const QByteArray& nick, const QByteArray& ip, cons
         }
 
         if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
-            QByteArray cmd( RCON_START );
-            cmd.append( m_rconPass );
+            QByteArray cmd = cmdBegin();
             cmd.append( " set g_gravity " );
             cmd.append( msgList.at( 1 ) );              // number
 
@@ -195,8 +196,7 @@ void GameController::map( const QByteArray& nick, const QByteArray& ip, const QL
 
     if( msgList.count() == 2 ) {
         if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
-            QByteArray cmd( RCON_START );
-            cmd.append( m_rconPass );
+            QByteArray cmd = cmdBegin();
             cmd.append( " map " );
             cmd.append( msgList.at( 1 ) );                // map
 
@@ -219,8 +219,7 @@ void GameController::nextMap( const QByteArray& nick, const QByteArray& ip, cons
 
     if( msgList.count() == 2 ) {
         if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
-            QByteArray cmd( RCON_START );
-            cmd.append( m_rconPass );
+            QByteArray cmd = cmdBegin();
             cmd.append( " set g_nextmap " );
             cmd.append( msgList.at( 1 ) );                // map
 
@@ -235,6 +234,42 @@ void GameController::nextMap( const QByteArray& nick, const QByteArray& ip, cons
 }
 
 
+void GameController::reload( const QByteArray& nick, const QByteArray& ip )
+{
+    qDebug( "GameController::reload" );
+
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+
+    if( m_db->isAuthed( ircUser->userLogin, ip ) ) {
+        QByteArray cmd = cmdBegin();
+        cmd.append( " reload" );
+
+        m_socket->write( cmd );
+        emit( messageToUserSignal( nick, "reloading game" ) );
+    }
+    else
+        emit( notAuthedSignal( nick ) );
+}
+
+
+void GameController::restart( const QByteArray& nick, const QByteArray& ip )
+{
+    qDebug( "GameController::restart" );
+
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+
+    if( m_db->isAuthed( ircUser->userLogin, ip ) ) {
+        QByteArray cmd = cmdBegin();
+        cmd.append( " restart" );
+
+        m_socket->write( cmd );
+        emit( messageToUserSignal( nick, "restarting game" ) );
+    }
+    else
+        emit( notAuthedSignal( nick ) );
+}
+
+
 void GameController::status( const QByteArray& nick, const QByteArray &ip )
 {
     qDebug( "GameController::status" );
@@ -242,8 +277,7 @@ void GameController::status( const QByteArray& nick, const QByteArray &ip )
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
     if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // generate status command
-        QByteArray cmd( RCON_START );
-        cmd.append( m_rconPass );
+        QByteArray cmd = cmdBegin();
         cmd.append( " status" );
 
         m_socket->write( cmd );
@@ -257,6 +291,14 @@ void GameController::status( const QByteArray& nick, const QByteArray &ip )
 /***********
  * PRIVATE *
  **********/
+QByteArray GameController::cmdBegin()
+{
+    QByteArray cmd( RCON_START );
+    cmd.append( m_rconPass );
+    return cmd;
+}
+
+
 void GameController::loadSettings()
 {
     qDebug( "GameController::loadSettings" );

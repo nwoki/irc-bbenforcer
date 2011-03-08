@@ -87,6 +87,15 @@ private:
 
 
     /**
+     * change current map
+     * @param nick nick requesting command
+     * @param ip ip of nick requesting command
+     * @param msgList message sent by nick containing the map name
+     */
+    void map( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
+
+
+    /**
      * set the next map for the server
      * @param nick nick requesting command
      * @param ip ip of nick requesting command
@@ -96,12 +105,20 @@ private:
 
 
     /**
-     * change current map
+     * reload game
      * @param nick nick requesting command
      * @param ip ip of nick requesting command
-     * @param msgList message sent by nick containing the map name
+     * @param msgList message sent by nick containing the map name ( SHOULD BE EMPTY )
      */
-    void map( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void reload( const QByteArray &nick, const QByteArray &ip );
+
+
+    /**
+     * restart game
+     * @param nick nick requesting command
+     * @param ip ip of nick requesting command
+     */
+    void restart( const QByteArray &nick, const QByteArray &ip );
 
 
     /**
@@ -115,6 +132,7 @@ private:
     /***********
      * PRIVATE *
      **********/
+    QByteArray cmdBegin();                  /** returns a QByteArray with the beginning of the Rcon message to send to server */
     void loadSettings();                    /** load game controller settings */
 
     DbController *m_db;
