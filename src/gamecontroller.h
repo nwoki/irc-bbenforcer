@@ -52,8 +52,8 @@ private slots:
     void connectNotify();
 
 signals:
-    void notAuthedSignal( const QByteArray &user );
-    void messageToUserSignal( const QByteArray &user, const QByteArray &message );
+    void notAuthedSignal( const QByteArray &nick );
+    void messageToUserSignal( const QByteArray &nick, const QByteArray &message );
 
 private:
     /*****************
@@ -61,46 +61,55 @@ private:
     *****************/
     /**
      * send bigtext message to server
-     * @param user user requesting command
-     * @param ip ip of user requesting command
-     * @param msgList message sent by user to send to server
+     * @param nick nick requesting command
+     * @param ip ip of nick requesting command
+     * @param msgList message sent by nick to send to server
      */
-    void bigText( const QByteArray &user, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void bigText( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
+
+
+    /**
+     * execute the given config file on server
+     * @param nick nick requesting command
+     * @param ip ip of nick requesting command
+     * @param msgList message sent by nick to send to server
+     */
+    void execConfig( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
 
 
     /**
      * set gravity of the server
-     * @param user user requesting command
-     * @param ip ip of user requesting command
-     * @param msgList message sent by user containing the gravity value
+     * @param nick nick requesting command
+     * @param ip ip of nick requesting command
+     * @param msgList message sent by nick containing the gravity value
      */
-    void gravity( const QByteArray &user, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void gravity( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
 
 
     /**
      * set the next map for the server
-     * @param user user requesting command
-     * @param ip ip of user requesting command
-     * @param msgList message sent by user containing the map name
+     * @param nick nick requesting command
+     * @param ip ip of nick requesting command
+     * @param msgList message sent by nick containing the map name
      */
-    void nextMap( const QByteArray &user, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void nextMap( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
 
 
     /**
      * change current map
-     * @param user user requesting command
-     * @param ip ip of user requesting command
-     * @param msgList message sent by user containing the map name
+     * @param nick nick requesting command
+     * @param ip ip of nick requesting command
+     * @param msgList message sent by nick containing the map name
      */
-    void map( const QByteArray &user, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void map( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
 
 
     /**
      * request game server status
-     * @param user user requesting command
-     * @param ip ip of user requesting command
+     * @param nick nick requesting command
+     * @param ip ip of nick requesting command
      */
-    void status( const QByteArray &user, const QByteArray &ip );
+    void status( const QByteArray &nick, const QByteArray &ip );
 
 
     /***********

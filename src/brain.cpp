@@ -97,7 +97,7 @@ void Brain::parseGameData()
             for( int i = 0; i < msgLines.count(); i++ ) {
                 QByteArray msg = msgLines.at( i );
 
-                if( !msg.isEmpty() )
+                if( !msg.isEmpty() && !msg.contains( "print" ) )    // don't need annoying "print" on output
                     m_ircControl->sendLineToUser( nick, msg );
             }
         }

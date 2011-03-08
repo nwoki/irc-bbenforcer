@@ -68,17 +68,19 @@ void GameController::gameCommandParser( const QByteArray& nick, const QByteArray
         map( nick, ip, msgList );
     else if( cmd == "@status" )                 // send "status" command to server
         status( nick, ip );
+    else if( cmd == "@config" )                 // exec config file
+        execConfig( nick, ip, msgList );
 }
 
 
 QByteArray GameController::nextUserInLine()
 {
-    QByteArray user;
+    QByteArray nick;
     if( !m_userList.isEmpty() ) {   // no users in line
-        user = m_userList.first();
+        nick = m_userList.first();
         m_userList.pop_front();     // remove user from list
     }
-    return user;
+    return nick;
 }
 
 
@@ -126,6 +128,29 @@ void GameController::bigText( const QByteArray& nick, const QByteArray& ip, cons
     }
     else
         emit( messageToUserSignal( nick, "wrong number of parameters. [usage]@bigtext <text>" ) );
+}
+
+
+void GameController::execConfig( const QByteArray& nick, const QByteArray& ip, const QList< QByteArray >& msgList )
+{
+    qDebug( "GameController::execConfig" );
+
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+
+    if( msgList.count() == 2 ) {
+        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {
+            QByteArray cmd( RCON_START );
+            cmd.append( m_rconPass );
+            cmd.append( " exec " );
+            cmd.append( msgList.last() );   // config file
+            m_socket->write( cmd );
+            m_userList.append( nick );      // add to userlist for config status response
+        }
+        else
+            emit( notAuthedSignal( nick ) );
+    }
+    else
+        emit( messageToUserSignal( nick, "wrong number of parameters. [usage]@config <configFile> " ) );
 }
 
 

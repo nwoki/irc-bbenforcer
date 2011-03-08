@@ -43,6 +43,7 @@ Game commands are specified by putting a "@" in front.
 @map     <map>              - set server map to <map> NOTE: <map> has to be the map full name. es: "@map ut4_casa"
 @nextmap <map>              - set server nextmap to <map> NOTE: <map> has to be the map full name. es: "@map ut4_casa"
 @status                     - get status from server specified in config file
+@config  <config file>      - executes given <config file> on game server
 
 **BANBOT**
 ( coming soon )
