@@ -17,6 +17,8 @@
  ****************************************************************************************/
 
 #include "dbcontroller.h"
+#include "irccontroller.h"
+#include "ircuserscontainer.h"
 #include "gamecontroller.h"
 
 #include <QDir>
@@ -25,9 +27,10 @@
 #define RCON_START "\xff\xff\xff\xffrcon "
 
 
-GameController::GameController( DbController *db )
+GameController::GameController( DbController *db, IrcUsersContainer *ircUsers )
     : QObject( 0 )
     , m_db( db )
+    , m_ircUsers( ircUsers )
     , m_socket( new QUdpSocket() )
     , m_ip( QString() )
     , m_rconPass( QString() )
@@ -48,7 +51,7 @@ QUdpSocket *GameController::connectionSocket() const
 }
 
 
-void GameController::gameCommandParser( const QByteArray& user, const QByteArray& msg, const QByteArray& ip )
+void GameController::gameCommandParser( const QByteArray& nick, const QByteArray& msg, const QByteArray& ip )
 {
     qDebug() << "MESSAGE I GET IS -> " << msg;
     QList< QByteArray > msgList = msg.split( ' ' ); // split message
@@ -56,15 +59,15 @@ void GameController::gameCommandParser( const QByteArray& user, const QByteArray
     QString cmd = msgList.at( 0 );              // command given by user
 
     if( cmd == "@bigtext" )                     // send bigtext to server
-        bigText( user, ip, msgList );
+        bigText( nick, ip, msgList );
     else if( cmd == "@gravity" )                // set server gravity
-        gravity( user, ip, msgList );
+        gravity( nick, ip, msgList );
     else if( cmd == "@nextmap" )                // set server nextmap
-        nextMap( user, ip, msgList );
+        nextMap( nick, ip, msgList );
     else if( cmd == "@map" )                    // set server current map
-        map( user, ip, msgList );
+        map( nick, ip, msgList );
     else if( cmd == "@status" )                 // send "status" command to server
-        status( user, ip );
+        status( nick, ip );
 }
 
 
@@ -95,13 +98,15 @@ void GameController::connectNotify()
 /*****************
 * game functions *
 *****************/
-void GameController::bigText( const QByteArray& user, const QByteArray& ip, const QList< QByteArray >& msgList )
+void GameController::bigText( const QByteArray& nick, const QByteArray& ip, const QList< QByteArray >& msgList )
 {
     qDebug( "GameController::bigText" );
 
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+
     if( msgList.count() > 1 ) {
     QByteArray bigtext;
-        if( m_db->isAuthed( user, ip ) ) {  // gerate command
+        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
             QByteArray cmd( RCON_START );
             cmd.append( m_rconPass );
             cmd.append( " bigtext " );
@@ -114,19 +119,21 @@ void GameController::bigText( const QByteArray& user, const QByteArray& ip, cons
             bigtext.append( '"' );
 
             m_socket->write( cmd + bigtext );
-            emit( messageToUserSignal( user, "sent bigtext: " + bigtext ) );
+            emit( messageToUserSignal( nick, "sent bigtext: " + bigtext ) );
         }
         else
-            emit( notAuthedSignal( user ) );
+            emit( notAuthedSignal( nick ) );
     }
     else
-        emit( messageToUserSignal( user, "wrong number of parameters. [usage]@bigtext <text>" ) );
+        emit( messageToUserSignal( nick, "wrong number of parameters. [usage]@bigtext <text>" ) );
 }
 
 
-void GameController::gravity( const QByteArray& user, const QByteArray& ip, const QList< QByteArray >& msgList )
+void GameController::gravity( const QByteArray& nick, const QByteArray& ip, const QList< QByteArray >& msgList )
 {
     qDebug( "GameController::gravity" );
+
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
     if( msgList.count() == 2 ) {
         bool ok;
@@ -134,84 +141,91 @@ void GameController::gravity( const QByteArray& user, const QByteArray& ip, cons
         msgList.at( 1 ).toInt( &ok );
 
         if( !ok ) {
-            emit( messageToUserSignal( user, "the value for gravity has to be a number" ) );
+            emit( messageToUserSignal( nick, "the value for gravity has to be a number" ) );
             return;
         }
 
-        if( m_db->isAuthed( user, ip ) ) {  // gerate command
+        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
             QByteArray cmd( RCON_START );
             cmd.append( m_rconPass );
             cmd.append( " set g_gravity " );
-            cmd.append( msgList.at( 1 ) );  // map
+            cmd.append( msgList.at( 1 ) );              // number
 
             m_socket->write( cmd );
-            emit( messageToUserSignal( user, "gravity set to " + msgList.at( 1 ) ) );
+            emit( messageToUserSignal( nick, "gravity set to " + msgList.at( 1 ) ) );
         }
         else
-            emit( notAuthedSignal( user ) );
+            emit( notAuthedSignal( nick ) );
     }
     else
-        emit( messageToUserSignal( user, "wrong number of parameters. [usage]@gravity <num>" ) );
+        emit( messageToUserSignal( nick, "wrong number of parameters. [usage]@gravity <num>" ) );
 }
 
 
-void GameController::map( const QByteArray& user, const QByteArray& ip, const QList< QByteArray >& msgList )
+void GameController::map( const QByteArray& nick, const QByteArray& ip, const QList< QByteArray >& msgList )
 {
     qDebug( "GameController::map" );
 
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+
     if( msgList.count() == 2 ) {
-        if( m_db->isAuthed( user, ip ) ) {  // gerate command
+        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
             QByteArray cmd( RCON_START );
             cmd.append( m_rconPass );
             cmd.append( " map " );
-            cmd.append( msgList.at( 1 ) );  // map
+            cmd.append( msgList.at( 1 ) );                // map
 
             m_socket->write( cmd );
-            emit( messageToUserSignal( user, "map set to: " + msgList.at( 1 ) ) );
+            emit( messageToUserSignal( nick, "map set to: " + msgList.at( 1 ) ) );
         }
         else
-            emit( notAuthedSignal( user ) );
+            emit( notAuthedSignal( nick ) );
     }
     else
-        emit( messageToUserSignal( user, "wrong number of parameters. [usage]@map <map>" ) );
+        emit( messageToUserSignal( nick, "wrong number of parameters. [usage]@map <map>" ) );
 }
 
 
-void GameController::nextMap( const QByteArray& user, const QByteArray& ip, const QList< QByteArray >& msgList )
+void GameController::nextMap( const QByteArray& nick, const QByteArray& ip, const QList< QByteArray >& msgList )
 {
     qDebug( "GameController::nextMap" );
 
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+
     if( msgList.count() == 2 ) {
-        if( m_db->isAuthed( user, ip ) ) {  // gerate command
+        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
             QByteArray cmd( RCON_START );
             cmd.append( m_rconPass );
             cmd.append( " set g_nextmap " );
-            cmd.append( msgList.at( 1 ) );  // map
+            cmd.append( msgList.at( 1 ) );                // map
 
             m_socket->write( cmd );
-            emit( messageToUserSignal( user, "next map set to: " + msgList.at( 1 ) ) );
+            emit( messageToUserSignal( nick, "next map set to: " + msgList.at( 1 ) ) );
         }
         else
-            emit( notAuthedSignal( user ) );
+            emit( notAuthedSignal( nick ) );
     }
     else
-        emit( messageToUserSignal( user, "wrong number of parameters. [usage]@nextmap <map>" ) );
+        emit( messageToUserSignal( nick, "wrong number of parameters. [usage]@nextmap <map>" ) );
 }
 
 
-void GameController::status( const QByteArray& user, const QByteArray &ip )
+void GameController::status( const QByteArray& nick, const QByteArray &ip )
 {
     qDebug( "GameController::status" );
-    if( m_db->isAuthed( user, ip ) ) {  // generate status command
+
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+
+    if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // generate status command
         QByteArray cmd( RCON_START );
         cmd.append( m_rconPass );
         cmd.append( " status" );
 
         m_socket->write( cmd );
-        m_userList.append( user );      // add user to list
+        m_userList.append( nick );      // add user to list
     }
     else                                // tell user he/she's not authed
-        emit( notAuthedSignal( user ) );
+        emit( notAuthedSignal( nick ) );
 }
 
 

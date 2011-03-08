@@ -16,8 +16,8 @@
  * program.  If not, see <http://www.gnu.org/licenses/>.                                 *
  ****************************************************************************************/
 
-#include "irccontroller.h"
 #include "dbcontroller.h"
+#include "irccontroller.h"
 
 #include <QDir>
 #include <QSettings>
@@ -26,9 +26,10 @@
 
 #define end "\r\n"
 
-IrcController::IrcController( DbController *db )
+IrcController::IrcController( DbController *db, IrcUsersContainer *ircUsers )
     : m_connection( new QTcpSocket() )
     , m_dbController( db )
+    , m_ircUsers( ircUsers )
     , m_port( 0 )
     , m_chan( QString() )
     , m_ip( QString() )
@@ -56,12 +57,12 @@ IrcController::~IrcController()
 }
 
 
-void IrcController::addToTransition( const QByteArray &nick, WhoisStruct *ircClient )
+void IrcController::addToTransition( const QByteArray &nick, IrcUsersContainer::WhoisStruct *ircClient )
 {
     // in case the value already exists, it's overwritten
     qDebug( "IrcController::addToTransition" );
     qDebug() << "adding user: " << nick;
-    m_transitionUsers.insert( nick, ircClient );
+    m_ircUsers->addUser( nick, ircClient );
 
     // DEBUG outputs all users in transition hash
 //     QHash<QString,WhoisStruct*>::const_iterator it = m_transitionUsers.constBegin();
@@ -103,7 +104,7 @@ void IrcController::extractUserWhois( const QByteArray& serverText )
         return;
     }
 
-    WhoisStruct *whoStr = new WhoisStruct( auxList2.at( 4 ), auxList2.at( 1 ), auxList2.at( 2 ) );
+    IrcUsersContainer::WhoisStruct *whoStr = new IrcUsersContainer::WhoisStruct( auxList2.at( 4 ), auxList2.at( 1 ), auxList2.at( 2 ) );
 
     qDebug() << "\e[1;32mUSER IS: " << whoStr->nick << " " << whoStr->ip << " " << whoStr->userLogin << "\e[0m";
 
@@ -202,19 +203,8 @@ void IrcController::updateUserStruct( const QByteArray& oldNick, const QByteArra
     QList<QByteArray>msg = line.split( ':' );
     qDebug() << "Old nick -> " << oldNick << " new nick " << msg.last();
 
-    WhoisStruct *auxStruct = m_transitionUsers.value( oldNick );
-
-    if( auxStruct == 0 ) {
-        qDebug() << "\e[1;31m[ERROR] IrcController::addOp can't find WhoisStruct for nick : " << oldNick << "\e[0m";
+    if( !m_ircUsers->updateUserNick( oldNick, msg.last() ) )
         sendPrivateMessage( msg.last(), "error looking up your info. Please contact an admin" );
-        return;
-    }
-
-    WhoisStruct *newStruct = new WhoisStruct( msg.last()
-                                            , auxStruct->userLogin
-                                            , auxStruct->ip );
-    m_transitionUsers.remove( oldNick );            // delete old record
-    addToTransition( newStruct->nick, newStruct );  // add new record
 }
 
 
@@ -308,7 +298,7 @@ void IrcController::addOp( const QByteArray& nick, const QList< QByteArray >& ms
         return;
     }
 
-    WhoisStruct *ircUser = m_transitionUsers.value( nick );
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
     if( ircUser == 0 ) {
         qDebug() << "\e[1;31m[ERROR] IrcController::addOp can't find WhoisStruct for nick : " << nick << "\e[0m";
@@ -321,7 +311,7 @@ void IrcController::addOp( const QByteArray& nick, const QList< QByteArray >& ms
         return;
     }
 
-    WhoisStruct *newAdmin = m_transitionUsers.value( msg.at( 1 ) );
+    IrcUsersContainer::WhoisStruct *newAdmin = m_ircUsers->user( msg.at( 1 ) );
 
     if( newAdmin == 0 ) {       // don't have info
         qDebug() << "\e[1;31m[ERROR] IrcController::addOp can't find WhoisStruct for nick : " << msg.at( 1 ) << "\e[0m";
@@ -342,7 +332,7 @@ void IrcController::addOp( const QByteArray& nick, const QList< QByteArray >& ms
 
 void IrcController::auth( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip )
 {
-    WhoisStruct *ircUser = m_transitionUsers.value( nick );
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
     if( msg.size() > 2 || msg.size() == 1 || ircUser == 0 ) {       // wrong parameters, abort
         sendPrivateMessage( nick, "wrong parameters. send me-> '!auth <password>'" );
@@ -367,7 +357,7 @@ void IrcController::auth( const QByteArray &nick, const QList< QByteArray > &msg
 
 void IrcController::ban( const QByteArray& nick, const QList< QByteArray >& msg, const QByteArray& ip )
 {
-    WhoisStruct *ircUser = m_transitionUsers.value( nick );     // user requesting
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick ); // user requesting
 
     if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) { // not authed
         sendNotAuthedMessage( nick );
@@ -380,7 +370,7 @@ void IrcController::ban( const QByteArray& nick, const QList< QByteArray >& msg,
     }
 
     // user to ban
-    WhoisStruct *userStruct = m_transitionUsers.value( msg.at( 1 )/* nick */ );
+    IrcUsersContainer::WhoisStruct *userStruct = m_ircUsers->user( msg.at( 1 ) /*nick*/ );
 
     // proceed with ban
     QByteArray cmd( "MODE " );
@@ -428,7 +418,7 @@ void IrcController::help( const QByteArray &nick )
 
 void IrcController::kick( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip )
 {
-    WhoisStruct *ircUser = m_transitionUsers.value( nick );
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
     if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) {   // not authed
         sendNotAuthedMessage( nick );

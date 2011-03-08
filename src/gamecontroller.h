@@ -23,23 +23,24 @@
 #include <QVector>
 
 class DbController;
+class IrcUsersContainer;
 
 class GameController : public QObject
 {
     Q_OBJECT
 
 public:
-    GameController( DbController *db );
+    GameController( DbController *db, IrcUsersContainer *ircUsers );
 
     QUdpSocket *connectionSocket() const;   /** get socket used by class for connection to server */
 
     /**
      * parses game commands sent via irc by user
-     * @param user user of the command to parse
+     * @param nick nick of the command to parse
      * @param msg message of the user to parse
      * @param ip ip of user
      */
-    void gameCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
+    void gameCommandParser( const QByteArray &nick, const QByteArray &msg, const QByteArray &ip );
 
     /**
      * returns the next user in line that has requested a command with info in response
@@ -108,6 +109,7 @@ private:
     void loadSettings();                    /** load game controller settings */
 
     DbController *m_db;
+    IrcUsersContainer *m_ircUsers;
     QUdpSocket *m_socket;
     QString m_ip
     , m_rconPass;

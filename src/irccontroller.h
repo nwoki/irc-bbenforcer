@@ -19,6 +19,9 @@
 #ifndef IRCCONTROLLER_H
 #define IRCCONTROLLER_H
 
+#include "brain.h"
+#include "ircuserscontainer.h"
+
 #include <QObject>
 #include <QTcpSocket>
 
@@ -28,21 +31,7 @@ class IrcController : public QObject
 {
     Q_OBJECT
 public:
-
-    struct WhoisStruct {
-        public:
-            WhoisStruct( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip )
-            : nick( nick )
-            , userLogin( userLogin )
-            , ip( ip )
-            {}
-
-            QByteArray nick;
-            QByteArray userLogin;
-            QByteArray ip;
-    };
-
-    IrcController( DbController *db );
+    IrcController( DbController *db, IrcUsersContainer *ircUsers );
     ~IrcController();
 
     /**
@@ -50,7 +39,7 @@ public:
      * @param nick nick of the new ircClient
      * @param ircClient class for the ircClient
      */
-    void addToTransition( const QByteArray &nick, WhoisStruct *ircClient );
+    void addToTransition( const QByteArray &nick, IrcUsersContainer::WhoisStruct *ircClient );
 
     /**
      * Requests whois for all users in channel
@@ -237,7 +226,7 @@ private:
 
     QTcpSocket *m_connection;
     DbController *m_dbController;
-    QHash< QString, WhoisStruct* >m_transitionUsers;    /** keeps track of users that enter and leave the server */
+    IrcUsersContainer *m_ircUsers;
 
     int m_port;
     QString m_chan, m_ip, m_nick;

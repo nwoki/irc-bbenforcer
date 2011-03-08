@@ -24,11 +24,13 @@
 class DbController;
 class GameController;
 class IrcController;
+class IrcUsersContainer;
 
 class Brain : public QObject
 {
     Q_OBJECT
 public:
+
     Brain();
     ~Brain();
 
@@ -52,6 +54,7 @@ public slots:
 
 private:
     DbController *m_dbControl;
+    IrcUsersContainer *m_ircUsers;
     GameController *m_gameControl;
     IrcController *m_ircControl;
 

@@ -20,14 +20,16 @@
 #include "dbcontroller.h"
 #include "gamecontroller.h"
 #include "irccontroller.h"
+#include "ircuserscontainer.h"
 
 #include <QDebug>
 
 Brain::Brain()
     : QObject( 0 )
     , m_dbControl( new DbController() )
-    , m_gameControl( new GameController( m_dbControl ) )
-    , m_ircControl( new IrcController( m_dbControl ) )
+    , m_ircUsers( new IrcUsersContainer() )
+    , m_gameControl( new GameController( m_dbControl, m_ircUsers ) )
+    , m_ircControl( new IrcController( m_dbControl, m_ircUsers ) )
 {
     qDebug( "Brain::Brain" );
 
@@ -145,9 +147,9 @@ void Brain::parseIrcData()
 
         // on join, add user to transition and check if banned
         else if( m_ircData.contains( "JOIN "  + ircSettings.value( "chan" ).toUtf8() ) ) {
-            IrcController::WhoisStruct *ircUser = new IrcController::WhoisStruct( extractNick( m_ircData )
-                                                                                , extractUserLogin( m_ircData )
-                                                                                , extractIp( m_ircData ) );
+            IrcUsersContainer::WhoisStruct *ircUser = new IrcUsersContainer::WhoisStruct( extractNick( m_ircData )
+                                                                                        , extractUserLogin( m_ircData )
+                                                                                        , extractIp( m_ircData ) );
             m_ircControl->addToTransition( ircUser->nick, ircUser );
 
             if( m_dbControl->isBanned( ircUser->userLogin, ircUser->ip ) )
