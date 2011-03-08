@@ -132,6 +132,8 @@ void IrcController::ircCommandParser( const QByteArray &nick, const QByteArray &
         addOp( nick, msgList, ip );
     else if( command == "!deop" )                   // !deop <nick>
         deop( nick, msgList, ip );
+    else if( command == "!kickban" )                // !kickban <nick> <kick message>
+        kickBan( nick, msgList, ip );
 }
 
 
@@ -475,6 +477,14 @@ void IrcController::kick( const QByteArray &nick, const QList< QByteArray > &msg
     QByteArray cmd( "KICK " );
     cmd.append( m_chan + " " + /*nick*/msg.at( 1 ) + " :" + reason.trimmed() + end );
     m_connection->write( cmd + end );
+}
+
+
+void IrcController::kickBan( const QByteArray& nick, const QList< QByteArray >& msg, const QByteArray& ip )
+{
+    // :)
+    ban( nick, msg, ip );
+    kick( nick, msg, ip );
 }
 
 

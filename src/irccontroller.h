@@ -196,6 +196,15 @@ private:
      */
     void kick( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
 
+
+    /**
+     * kickbans client
+     * @param nick user requesting kick
+     * @param msg message sent by user
+     * @param ip ip of user requesting kick
+     */
+    void kickBan( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+
     /****************
     * bot functions *
     ****************/

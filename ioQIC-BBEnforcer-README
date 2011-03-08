@@ -34,7 +34,8 @@ Game commands are specified by putting a "@" in front.
 !help                       - sends a link to the user pointing to this help file
 !auth    <password>         - authenticates user with given <password> to the bot
 !ban     <nick>             - bans <nick> from channel
-!kick    <nick> <reason>    - kicks <nick> with given <reason>
+!kick    <nick> <kick msg>  - kicks <nick> with given <kick msg>
+!kickban <nick> <kick msg>  - bans and kick <nick> from channel with <kick msg>
 !op      <nick> <password>  - adds user <nick> to the admins with <password>
 !deop    <nick>             - removes user <nick> from the admins database
 
