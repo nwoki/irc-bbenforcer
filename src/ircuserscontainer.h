@@ -24,17 +24,22 @@
 
 class IrcUsersContainer {
 public:
-    struct WhoisStruct {
+    class WhoisStruct {
     public:
         WhoisStruct( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip )
-        : nick( nick )
-        , userLogin( userLogin )
-        , ip( ip )
+        : m_nick( nick )
+        , m_userLogin( userLogin )
+        , m_ip( ip )
         {}
 
-        QByteArray nick
-        , userLogin
-        , ip;
+        const QByteArray nick() { return m_nick; }
+        const QByteArray userLogin() { return m_userLogin; }
+        const QByteArray ip() { return m_ip; }
+
+    private:
+        QByteArray m_nick
+        , m_userLogin
+        , m_ip;
     };
 
     IrcUsersContainer();
@@ -42,7 +47,7 @@ public:
     void addUser( const QByteArray &nick, WhoisStruct *userStruct );
     void removeUser( const QByteArray &nick );
     bool updateUserNick( const QByteArray &oldNick, const QByteArray &newNick );
-    WhoisStruct* user( const QByteArray &nick );
+    WhoisStruct* user( const QByteArray &nick ) const;
 
 private:
     QHash< QByteArray, WhoisStruct* >m_container;

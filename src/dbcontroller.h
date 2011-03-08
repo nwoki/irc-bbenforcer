@@ -117,6 +117,13 @@ public:
 
 
     /**
+     * removes users from banned table
+     * @param user user to remove from banned table
+     */
+    bool removeFromBanned( const QByteArray &user );
+
+
+    /**
      * removes user from oplist and authed table in case the user was authed
      * when this command was given
      * @param user user to deop

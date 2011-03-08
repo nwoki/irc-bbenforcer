@@ -205,6 +205,15 @@ private:
      */
     void kickBan( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
 
+
+    /**
+     * unban user
+     * @param nick user requesting unban
+     * @param msg message sent by user
+     * @param ip ip of user requesting unban
+     */
+    void unban( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+
     /****************
     * bot functions *
     ****************/
@@ -246,6 +255,12 @@ private:
      * PRIVATE *
      **********/
     void loadSettings();                                /** load bot's irc settings from config file */
+
+    /**
+     * sends irc command to irc channel the bot is on
+     * @param command command to send
+     */
+    void sendIrcCommand( const QByteArray &command ) const;
 
     QTcpSocket *m_connection;
     DbController *m_dbController;

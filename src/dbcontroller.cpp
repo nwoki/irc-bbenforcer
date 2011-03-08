@@ -192,6 +192,30 @@ bool DbController::isBanned( const QByteArray& userLogin, const QByteArray& ip )
 }
 
 
+bool DbController::removeFromBanned( const QByteArray& user )
+{
+    if( !openDb() ) {
+        qWarning( "\e[1;31m[FAIL]DbController::removeFromBanned FAILED to open database. Can't verify if user is banned or not \e[0m" );
+        return false;
+    }
+
+    QSqlQuery query;
+    if( !query.exec( "select id from banned where login='" + user + "';" ) ) {
+        qWarning() << "\e[1;31mDb[FAIL]DbController::removeFromBanned FAILED to execute query" << query.lastError() << "\e[0m" ;
+        return false;
+    }
+
+    if( query.next() ) {    // user is on Db
+        if( !query.exec( "delete from banned where login='" + user + "';" ) ) {
+            qWarning() << "\e[1;31mDb[FAIL]DbController::removeFromBanned FAILED to execute query" << query.lastError() << "\e[0m" ;
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+
 bool DbController::removeFromOplist( const QByteArray& user )
 {
     qDebug( "DbController::removeFromOplist" );

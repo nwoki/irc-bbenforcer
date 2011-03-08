@@ -49,15 +49,15 @@ bool IrcUsersContainer::updateUserNick( const QByteArray& oldNick, const QByteAr
     }
 
     WhoisStruct *newStruct = new WhoisStruct( newNick
-                                            , auxStruct->userLogin
-                                            , auxStruct->ip );
+                                            , auxStruct->userLogin()
+                                            , auxStruct->ip() );
     m_container.remove( oldNick );                                  // delete old record
-    addUser( newStruct->nick, newStruct );                          // add new record
+    addUser( newStruct->nick(), newStruct );                        // add new record
     return true;                                                    // success
 }
 
 
-IrcUsersContainer::WhoisStruct* IrcUsersContainer::user( const QByteArray& nick )
+IrcUsersContainer::WhoisStruct* IrcUsersContainer::user( const QByteArray& nick ) const
 {
     return m_container.value( nick );
 }

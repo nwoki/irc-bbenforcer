@@ -76,7 +76,7 @@ void IrcController::addToTransition( const QByteArray &nick, IrcUsersContainer::
 void IrcController::channelUsersWhois() const
 {
     qDebug( "IrcController::channelUsersWhois" );
-    m_connection->write( "WHO " + m_chan.toUtf8() + end );
+    sendIrcCommand( "WHO " + m_chan.toUtf8() );
 }
 
 
@@ -106,10 +106,10 @@ void IrcController::extractUserWhois( const QByteArray& serverText )
 
     IrcUsersContainer::WhoisStruct *whoStr = new IrcUsersContainer::WhoisStruct( auxList2.at( 4 ), auxList2.at( 1 ), auxList2.at( 2 ) );
 
-    qDebug() << "\e[1;32mUSER IS: " << whoStr->nick << " " << whoStr->ip << " " << whoStr->userLogin << "\e[0m";
+    qDebug() << "\e[1;32mUSER IS: " << whoStr->nick() << " " << whoStr->ip() << " " << whoStr->userLogin() << "\e[0m";
 
     // then add to transition users
-    addToTransition( whoStr->nick, whoStr );
+    addToTransition( whoStr->nick(), whoStr );
 }
 
 
@@ -134,6 +134,8 @@ void IrcController::ircCommandParser( const QByteArray &nick, const QByteArray &
         deop( nick, msgList, ip );
     else if( command == "!kickban" )                // !kickban <nick> <kick message>
         kickBan( nick, msgList, ip );
+    else if( command == "!unban" )                  // unban <nick>
+        unban( nick, msgList, ip );
 }
 
 
@@ -190,7 +192,8 @@ void IrcController::loginBan( const QByteArray& nick, const QByteArray& userLogi
 void IrcController::pong( const QByteArray &pingData )
 {
     QList<QByteArray>pingSplit = pingData.split( ':' );
-    m_connection->write( "PONG :" + pingSplit.at( 1 ) + end );
+    sendIrcCommand( "PONG :" + pingSplit.at( 1 ) );
+//     m_connection->write( "PONG :" + pingSplit.at( 1 ) + end );
 }
 
 
@@ -204,7 +207,7 @@ void IrcController::updateUserStruct( const QByteArray& oldNick, const QByteArra
 {
     qDebug( "IrcController::updateUserStruct" );
 
-    QList<QByteArray>msg = line.split( ':' );
+    QList<QByteArray> msg = line.split( ':' );
     qDebug() << "Old nick -> " << oldNick << " new nick " << msg.last();
 
     if( !m_ircUsers->updateUserNick( oldNick, msg.last() ) )
@@ -310,7 +313,7 @@ void IrcController::addOp( const QByteArray& nick, const QList< QByteArray >& ms
         return;
     }
 
-    if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) {   // not authed
+    if( !m_dbController->isAuthed( ircUser->userLogin(), ip ) ) {   // not authed
         sendNotAuthedMessage( nick );
         return;
     }
@@ -323,14 +326,14 @@ void IrcController::addOp( const QByteArray& nick, const QList< QByteArray >& ms
         return;
     }
 
-    DbController::opMsg result = m_dbController->addToOplist( newAdmin->userLogin, msg.at( 2 ) );
+    DbController::opMsg result = m_dbController->addToOplist( newAdmin->userLogin(), msg.at( 2 ) );
 
     if( result == DbController::OP_OK )
-        sendPrivateMessage( nick, "user '" + newAdmin->userLogin + "' added to oplist" );
+        sendPrivateMessage( nick, "user '" + newAdmin->userLogin() + "' added to oplist" );
     else if( result == DbController::ALREADY_OPPED )
-        sendPrivateMessage( nick, "user " + newAdmin->userLogin + " is already in the oplist table" );
+        sendPrivateMessage( nick, "user " + newAdmin->userLogin() + " is already in the oplist table" );
     else if( result == DbController::OP_DATABASE_ERROR )
-        sendPrivateMessage( nick, "ERROR WITH DATABASE when adding: " + newAdmin->userLogin + " to oplist" );
+        sendPrivateMessage( nick, "ERROR WITH DATABASE when adding: " + newAdmin->userLogin() + " to oplist" );
 }
 
 
@@ -345,7 +348,7 @@ void IrcController::auth( const QByteArray &nick, const QList< QByteArray > &msg
     else {
         DbController::authMsg response;
 
-        response = m_dbController->auth( ircUser->userLogin, msg.at( 1 )/*<- password*/, ip );
+        response = m_dbController->auth( ircUser->userLogin(), msg.at( 1 )/*<- password*/, ip );
 
         if( response == DbController::ALREADY_AUTHED )
             sendPrivateMessage( nick, "you're already authed!" );
@@ -363,7 +366,7 @@ void IrcController::ban( const QByteArray& nick, const QList< QByteArray >& msg,
 {
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick ); // user requesting
 
-    if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) { // not authed
+    if( !m_dbController->isAuthed( ircUser->userLogin(), ip ) ) { // not authed
         sendNotAuthedMessage( nick );
         return;
     }
@@ -380,15 +383,16 @@ void IrcController::ban( const QByteArray& nick, const QList< QByteArray >& msg,
     QByteArray cmd( "MODE " );
     cmd.append( m_chan );
     cmd.append( " +b *!" );
-    cmd.append( userStruct->userLogin );
+    cmd.append( userStruct->userLogin() );
     cmd.append( "@" );
-    cmd.append( userStruct->ip );
+    cmd.append( userStruct->ip() );
 
     // send to irc chan
-    m_connection->write( cmd + end );
+    sendIrcCommand( cmd );
+//     m_connection->write( cmd + end );
 
     // add to database
-    m_dbController->addToBanned( userStruct->nick, userStruct->userLogin, userStruct->ip, nick, QDateTime::currentDateTime().toString( "dd-mm-yyyy hh:mm:ss" ) );
+    m_dbController->addToBanned( userStruct->nick(), userStruct->userLogin(), userStruct->ip(), nick, QDateTime::currentDateTime().toString( "dd-mm-yyyy hh:mm:ss" ) );
 }
 
 
@@ -401,7 +405,8 @@ void IrcController::botBan( const QByteArray& userLogin, const QByteArray& ip )
     cmd.append( "@" );
     cmd.append( ip );
 
-    m_connection->write( cmd + end );
+    sendIrcCommand( cmd );
+//     m_connection->write( cmd + end );
 }
 
 
@@ -409,7 +414,8 @@ void IrcController::botKick( const QByteArray& nick, const QString& reason )
 {
     QByteArray cmd( "KICK " );
     cmd.append( m_chan + " " + nick + " :" + reason + end );
-    m_connection->write( cmd + end );
+    sendIrcCommand( cmd );
+//     m_connection->write( cmd + end );
 }
 
 
@@ -418,7 +424,7 @@ void IrcController::deop(const QByteArray& nick, const QList< QByteArray >& msg,
     // user requesting command
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
-    if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) { // not authed
+    if( !m_dbController->isAuthed( ircUser->userLogin(), ip ) ) { // not authed
         sendNotAuthedMessage( nick );
         return;
     }
@@ -432,7 +438,7 @@ void IrcController::deop(const QByteArray& nick, const QList< QByteArray >& msg,
     ircUser = m_ircUsers->user( msg.at( 1 ) );
 
     if( ircUser != 0 ) {
-        if( !m_dbController->removeFromOplist( ircUser->userLogin ) )
+        if( !m_dbController->removeFromOplist( ircUser->userLogin() ) )
             sendPrivateMessage( nick, "ERROR: couldn't remove user from oplist" );
         else
             sendPrivateMessage( nick, "user removed successfully from database" );
@@ -454,7 +460,7 @@ void IrcController::kick( const QByteArray &nick, const QList< QByteArray > &msg
 {
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
-    if( !m_dbController->isAuthed( ircUser->userLogin, ip ) ) {   // not authed
+    if( !m_dbController->isAuthed( ircUser->userLogin(), ip ) ) {   // not authed
         sendNotAuthedMessage( nick );
         return;
     }
@@ -476,7 +482,8 @@ void IrcController::kick( const QByteArray &nick, const QList< QByteArray > &msg
     // send kick
     QByteArray cmd( "KICK " );
     cmd.append( m_chan + " " + /*nick*/msg.at( 1 ) + " :" + reason.trimmed() + end );
-    m_connection->write( cmd + end );
+    sendIrcCommand( cmd );
+//     m_connection->write( cmd + end );
 }
 
 
@@ -485,6 +492,47 @@ void IrcController::kickBan( const QByteArray& nick, const QList< QByteArray >& 
     // :)
     ban( nick, msg, ip );
     kick( nick, msg, ip );
+}
+
+
+void IrcController::unban( const QByteArray& nick, const QList< QByteArray >& msg, const QByteArray& ip )
+{
+    if( msg.count() != 2 ) {
+        sendPrivateMessage( nick, "wrong parameters! [usage]!unban <nick>" );
+        return;
+    }
+
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+    IrcUsersContainer::WhoisStruct *userToUnban = m_ircUsers->user( msg.at( 1 ) );
+
+    if( ircUser == 0 ) {
+        sendPrivateMessage( nick, "error can't find your info. re-enter channel to reload data" );
+        return;
+    }
+
+    if( userToUnban == 0 ) {
+        sendPrivateMessage( nick, "error can't find user '" + msg.at( 1 ) + "' info." );
+        return;
+    }
+
+    if( m_dbController->isAuthed( ircUser->userLogin(), ip ) ) {
+        if( !m_dbController->removeFromBanned( userToUnban->userLogin() ) )
+            sendPrivateMessage( nick, "ERROR removing banned user from database!" );
+        else
+            sendPrivateMessage( nick, "'" + userToUnban->nick() + "' removed from banned users" );
+
+        // unban from irc channel
+        QByteArray unbanCmd( "MODE " );
+        unbanCmd.append( m_chan );
+        unbanCmd.append( " -b *!" );
+        unbanCmd.append( userToUnban->userLogin() );
+        unbanCmd.append( "@" );
+        unbanCmd.append( userToUnban->ip() );
+
+        sendIrcCommand( unbanCmd );
+    }
+    else
+        sendNotAuthedMessage( nick );
 }
 
 
@@ -517,7 +565,7 @@ void IrcController::sendNotAuthedMessage( const QByteArray& nick )
 
 void IrcController::sendPrivateMessage( const QByteArray &nick, const QByteArray &message )
 {
-    m_connection->write( genPrivateMessage( nick, message ) );
+    sendIrcCommand( genPrivateMessage( nick, message ) );
 }
 
 
@@ -528,14 +576,14 @@ void IrcController::whois( const QByteArray &nick )
     QByteArray copy = nick;
 
     if( copy.isEmpty() )    // want channel WHO
-        m_connection->write( "WHO " + m_chan.toUtf8() + end );
+        sendIrcCommand( "WHO " + m_chan.toUtf8() );
     else {
         QChar sym = copy.at( 0 );
 
         if( sym == '+' || sym == '@' )
             copy.remove( 0, 1 );
 
-        m_connection->write( "WHO " + copy + end );
+        sendIrcCommand( "WHO " + copy );
     }
 }
 
@@ -585,4 +633,11 @@ void IrcController::loadSettings()
     qDebug() << ircSettings();
     settings.endArray();
 }
+
+
+void IrcController::sendIrcCommand( const QByteArray &command ) const
+{
+    m_connection->write( command + end );
+}
+
 

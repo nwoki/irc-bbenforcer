@@ -150,10 +150,10 @@ void Brain::parseIrcData()
             IrcUsersContainer::WhoisStruct *ircUser = new IrcUsersContainer::WhoisStruct( extractNick( m_ircData )
                                                                                         , extractUserLogin( m_ircData )
                                                                                         , extractIp( m_ircData ) );
-            m_ircControl->addToTransition( ircUser->nick, ircUser );
+            m_ircControl->addToTransition( ircUser->nick(), ircUser );
 
-            if( m_dbControl->isBanned( ircUser->userLogin, ircUser->ip ) )
-                m_ircControl->loginBan( ircUser->nick, ircUser->userLogin, ircUser->ip );  // kick - ban the user!
+            if( m_dbControl->isBanned( ircUser->userLogin(), ircUser->ip() ) )
+                m_ircControl->loginBan( ircUser->nick(), ircUser->userLogin(), ircUser->ip() );  // kick - ban the user!
         }
 
         // update user struct

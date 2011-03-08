@@ -112,7 +112,7 @@ void GameController::bigText( const QByteArray& nick, const QByteArray& ip, cons
 
     if( msgList.count() > 1 ) {
     QByteArray bigtext;
-        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
+        if( m_db->isAuthed( ircUser->userLogin(), ip ) ) {  // gerate command
             QByteArray cmd = cmdBegin();
             cmd.append( " bigtext " );
 
@@ -141,7 +141,7 @@ void GameController::execConfig( const QByteArray& nick, const QByteArray& ip, c
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
     if( msgList.count() == 2 ) {
-        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {
+        if( m_db->isAuthed( ircUser->userLogin(), ip ) ) {
             QByteArray cmd = cmdBegin();
             cmd.append( " exec " );
             cmd.append( msgList.last() );   // config file
@@ -172,7 +172,7 @@ void GameController::gravity( const QByteArray& nick, const QByteArray& ip, cons
             return;
         }
 
-        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
+        if( m_db->isAuthed( ircUser->userLogin(), ip ) ) {  // gerate command
             QByteArray cmd = cmdBegin();
             cmd.append( " set g_gravity " );
             cmd.append( msgList.at( 1 ) );              // number
@@ -195,7 +195,7 @@ void GameController::map( const QByteArray& nick, const QByteArray& ip, const QL
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
     if( msgList.count() == 2 ) {
-        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
+        if( m_db->isAuthed( ircUser->userLogin(), ip ) ) {  // gerate command
             QByteArray cmd = cmdBegin();
             cmd.append( " map " );
             cmd.append( msgList.at( 1 ) );                // map
@@ -218,7 +218,7 @@ void GameController::nextMap( const QByteArray& nick, const QByteArray& ip, cons
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
     if( msgList.count() == 2 ) {
-        if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // gerate command
+        if( m_db->isAuthed( ircUser->userLogin(), ip ) ) {  // gerate command
             QByteArray cmd = cmdBegin();
             cmd.append( " set g_nextmap " );
             cmd.append( msgList.at( 1 ) );                // map
@@ -240,7 +240,7 @@ void GameController::reload( const QByteArray& nick, const QByteArray& ip )
 
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
-    if( m_db->isAuthed( ircUser->userLogin, ip ) ) {
+    if( m_db->isAuthed( ircUser->userLogin(), ip ) ) {
         QByteArray cmd = cmdBegin();
         cmd.append( " reload" );
 
@@ -258,7 +258,7 @@ void GameController::restart( const QByteArray& nick, const QByteArray& ip )
 
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
-    if( m_db->isAuthed( ircUser->userLogin, ip ) ) {
+    if( m_db->isAuthed( ircUser->userLogin(), ip ) ) {
         QByteArray cmd = cmdBegin();
         cmd.append( " restart" );
 
@@ -276,7 +276,7 @@ void GameController::status( const QByteArray& nick, const QByteArray &ip )
 
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
-    if( m_db->isAuthed( ircUser->userLogin, ip ) ) {  // generate status command
+    if( m_db->isAuthed( ircUser->userLogin(), ip ) ) {  // generate status command
         QByteArray cmd = cmdBegin();
         cmd.append( " status" );
 
