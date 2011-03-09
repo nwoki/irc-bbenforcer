@@ -22,9 +22,13 @@
 #include <QByteArray>
 #include <QHash>
 
-class IrcUsersContainer {
+class IrcUsersContainer : public QObject
+{
+    Q_OBJECT
+
 public:
-    class WhoisStruct {
+    class WhoisStruct
+    {
     public:
         WhoisStruct( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip )
         : m_nick( nick )
@@ -48,6 +52,12 @@ public:
     void removeUser( const QByteArray &nick );
     bool updateUserNick( const QByteArray &oldNick, const QByteArray &newNick );
     WhoisStruct* user( const QByteArray &nick ) const;
+
+public slots:
+    void emitUsers();       /** class emits WhoIsStructs one by one */
+
+signals:
+    void sendUserSignal( IrcUsersContainer::WhoisStruct* ircUser );
 
 private:
     QHash< QByteArray, WhoisStruct* >m_container;

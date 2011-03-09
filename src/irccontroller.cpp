@@ -193,7 +193,6 @@ void IrcController::pong( const QByteArray &pingData )
 {
     QList<QByteArray>pingSplit = pingData.split( ':' );
     sendIrcCommand( "PONG :" + pingSplit.at( 1 ) );
-//     m_connection->write( "PONG :" + pingSplit.at( 1 ) + end );
 }
 
 
@@ -389,7 +388,6 @@ void IrcController::ban( const QByteArray& nick, const QList< QByteArray >& msg,
 
     // send to irc chan
     sendIrcCommand( cmd );
-//     m_connection->write( cmd + end );
 
     // add to database
     m_dbController->addToBanned( userStruct->nick(), userStruct->userLogin(), userStruct->ip(), nick, QDateTime::currentDateTime().toString( "dd-mm-yyyy hh:mm:ss" ) );
@@ -406,7 +404,6 @@ void IrcController::botBan( const QByteArray& userLogin, const QByteArray& ip )
     cmd.append( ip );
 
     sendIrcCommand( cmd );
-//     m_connection->write( cmd + end );
 }
 
 
@@ -415,7 +412,6 @@ void IrcController::botKick( const QByteArray& nick, const QString& reason )
     QByteArray cmd( "KICK " );
     cmd.append( m_chan + " " + nick + " :" + reason + end );
     sendIrcCommand( cmd );
-//     m_connection->write( cmd + end );
 }
 
 
@@ -483,7 +479,6 @@ void IrcController::kick( const QByteArray &nick, const QList< QByteArray > &msg
     QByteArray cmd( "KICK " );
     cmd.append( m_chan + " " + /*nick*/msg.at( 1 ) + " :" + reason.trimmed() + end );
     sendIrcCommand( cmd );
-//     m_connection->write( cmd + end );
 }
 
 

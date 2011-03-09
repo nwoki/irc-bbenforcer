@@ -21,7 +21,23 @@
 #include <QDebug>
 
 IrcUsersContainer::IrcUsersContainer()
+    : QObject( 0 )
 {
+}
+
+/*********
+ * SLOTS *
+ ********/
+void IrcUsersContainer::emitUsers()
+{
+    qDebug( "IrcUsersContainer::emitUsers" );
+    QHash< QByteArray, WhoisStruct* >::const_iterator it = m_container.constBegin();
+
+    while( it != m_container.constEnd() ) {
+        qDebug() << "emitting user: " << it.value()->userLogin();
+        emit( sendUserSignal( it.value() ) );
+        it++;
+    }
 }
 
 

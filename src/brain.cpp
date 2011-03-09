@@ -23,6 +23,7 @@
 #include "ircuserscontainer.h"
 
 #include <QDebug>
+#include <QTimer>
 
 Brain::Brain()
     : QObject( 0 )
@@ -40,6 +41,9 @@ Brain::Brain()
     // connect gameControl signals
     connect( m_gameControl, SIGNAL( notAuthedSignal( QByteArray ) ), m_ircControl, SLOT( userNotAuthedSlot( QByteArray ) ) );
     connect( m_gameControl, SIGNAL( messageToUserSignal( QByteArray, QByteArray ) ), m_ircControl, SLOT( messageToUserSlot( QByteArray, QByteArray ) ) );
+
+    // connect ircUsersContainer
+    connect( m_ircUsers, SIGNAL( sendUserSignal( IrcUsersContainer::WhoisStruct* ) ), this, SLOT( checkUserOnJoin( IrcUsersContainer::WhoisStruct* ) ) );
 }
 
 Brain::~Brain()
@@ -79,6 +83,14 @@ QByteArray Brain::extractUserLogin( const QByteArray& text )
 /*******************
 *      SLOTS       *
 ********************/
+void Brain::checkUserOnJoin( IrcUsersContainer::WhoisStruct* ircUser )
+{
+    if( ircUser != 0 ) {
+        if( m_dbControl->isBanned( ircUser->userLogin(), ircUser->ip() ) )
+            m_ircControl->loginBan( ircUser->nick(), ircUser->userLogin(), ircUser->ip() );
+    }
+}
+
 
 void Brain::parseGameData()
 {
@@ -155,6 +167,10 @@ void Brain::parseIrcData()
             if( m_dbControl->isBanned( ircUser->userLogin(), ircUser->ip() ) )
                 m_ircControl->loginBan( ircUser->nick(), ircUser->userLogin(), ircUser->ip() );  // kick - ban the user!
         }
+
+        // after the bot has channel users, check them for ban
+        else if( m_ircData.contains( "End of /NAMES list" ) )
+            QTimer::singleShot( 5000, m_ircUsers, SLOT( emitUsers() ) );   // checkusers after 5 sec. Be shure to have them all
 
         // update user struct
         else if( m_ircData.contains( "NICK :" ) )
