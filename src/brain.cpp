@@ -141,8 +141,10 @@ void Brain::parseIrcData()
             m_ircControl->pong( m_ircData );
 
         // send whois for users in channel on startup
-        else if( m_ircData.contains( "End of /MOTD command" ) )
+        else if( m_ircData.contains( "End of /MOTD command" ) ) {
+            m_ircControl->logIn();
             m_ircControl->channelUsersWhois();
+        }
 
         // get user info from a "whois"
         /// TODO find out what these mean, the + and @ are statuses, but what are the letters???
@@ -170,7 +172,7 @@ void Brain::parseIrcData()
 
         // after the bot has channel users, check them for ban
         else if( m_ircData.contains( "End of /NAMES list" ) )
-            QTimer::singleShot( 5000, m_ircUsers, SLOT( emitUsers() ) );   // checkusers after 5 sec. Be shure to have them all
+            QTimer::singleShot( 3000, m_ircUsers, SLOT( emitUsers() ) );   // checkusers after 5 sec. Be shure to have them all
 
         // update user struct
         else if( m_ircData.contains( "NICK :" ) )
