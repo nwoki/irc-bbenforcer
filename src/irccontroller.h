@@ -271,3 +271,4 @@ private:
 };
 
 #endif // IRCCONTROLLER_H
+

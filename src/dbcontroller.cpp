@@ -479,3 +479,4 @@ void DbController::setup()
     createDatabaseFirstRun();
     loadAdmins();
 }
+

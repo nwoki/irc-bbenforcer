@@ -201,3 +201,4 @@ void Brain::parseIrcData()
         m_ircData.clear();
     }
 }
+

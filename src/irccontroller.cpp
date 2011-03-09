@@ -384,6 +384,14 @@ void IrcController::ban( const QByteArray& nick, const QList< QByteArray >& msg,
         return;
     }
 
+    // check to see someone isn't trying to ban me
+    if( msg.at( 1 ) == m_nick ) {
+        sendPrivateMessage( nick, "I am your god and you can't ban me with my own commands. You shall be punished" );
+        botBan( ircUser->userLogin(), ircUser->ip() );
+        botKick( ircUser->userLogin(), "TASTE MY WRATH!" );
+        return;
+    }
+
     // user to ban
     IrcUsersContainer::WhoisStruct *userStruct = m_ircUsers->user( msg.at( 1 ) /*nick*/ );
 
@@ -472,6 +480,14 @@ void IrcController::kick( const QByteArray &nick, const QList< QByteArray > &msg
 
     if( msg.size() == 1 ) {         // too few arguments
         sendPrivateMessage( nick, "too few arguments. '!kick <nick> <reason>'" );
+        return;
+    }
+
+    // check to see someone isn't trying to ban me
+    if( msg.at( 1 ) == m_nick ) {
+        sendPrivateMessage( nick, "I am your god and you can't kick me with my own commands. You shall be punished" );
+        botBan( ircUser->userLogin(), ircUser->ip() );
+        botKick( ircUser->userLogin(), "TASTE MY WRATH!" );
         return;
     }
 
