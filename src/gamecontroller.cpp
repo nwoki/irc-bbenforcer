@@ -53,6 +53,15 @@ QUdpSocket *GameController::connectionSocket() const
 
 void GameController::gameCommandParser( const QByteArray& nick, const QByteArray& msg, const QByteArray& ip )
 {
+    // check if user is banned. Only non-banned users can use the bot.
+    // This is to prevent actions from outside the channel
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+
+    if( m_db->isBanned( ircUser->userLogin(), ircUser->ip() ) ) {
+        emit( messageToUserSignal( ircUser->nick(), "you can't use me, you're currently banned. Sucks to be you" ) );
+        return;
+    }
+
     qDebug() << "MESSAGE I GET IS -> " << msg;
     QList< QByteArray > msgList = msg.split( ' ' ); // split message
 
