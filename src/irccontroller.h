@@ -99,6 +99,13 @@ public:
 
 
     /**
+     * requests whois info for user
+     * @param nick nick to request who for
+     */
+    void singleUserWhois( const QByteArray &nick );
+
+
+    /**
      * updates the user info on nick change
      * @param oldNick nick before change
      * @param line irc line containing ip and new nick
@@ -112,6 +119,14 @@ public slots:
      * @param message message to send
      */
     void messageToUserSlot( const QByteArray &nick, const QByteArray &message );
+
+
+    /**
+     * slot used by gamecontroller
+     * @param nick nick to do who check on
+     */
+    void singleUserWhoisSlot( const QByteArray &nick );
+
 
     /**
      * slot used to send not authed messages to users

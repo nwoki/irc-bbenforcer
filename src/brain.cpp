@@ -41,6 +41,7 @@ Brain::Brain()
     // connect gameControl signals
     connect( m_gameControl, SIGNAL( notAuthedSignal( QByteArray ) ), m_ircControl, SLOT( userNotAuthedSlot( QByteArray ) ) );
     connect( m_gameControl, SIGNAL( messageToUserSignal( QByteArray, QByteArray ) ), m_ircControl, SLOT( messageToUserSlot( QByteArray, QByteArray ) ) );
+    connect( m_gameControl, SIGNAL( singleUserWhoisSignal( QByteArray ) ), m_ircControl, SLOT( singleUserWhoisSlot( QByteArray ) ) );
 
     // connect ircUsersContainer
     connect( m_ircUsers, SIGNAL( sendUserSignal( IrcUsersContainer::WhoisStruct* ) ), this, SLOT( checkUserOnJoin( IrcUsersContainer::WhoisStruct* ) ) );
@@ -152,10 +153,12 @@ void Brain::parseIrcData()
         else if( m_ircData.contains( " H+ :3 " ) ||
                  m_ircData.contains( " H@ :3 " ) ||
                  m_ircData.contains( " Hx :3 " ) ||
+                 m_ircData.contains( " H@x :3 " )||
                  m_ircData.contains( " H :3 " )  ||
                  m_ircData.contains( " G+ :3 " ) ||
                  m_ircData.contains( " G@ :3 " ) ||
                  m_ircData.contains( " Gx :3 " ) ||
+                 m_ircData.contains( " G@x :3 " )||
                  m_ircData.contains( " G :3 " ) )
             m_ircControl->extractUserWhois( m_ircData );
 

@@ -119,6 +119,12 @@ void IrcController::ircCommandParser( const QByteArray &nick, const QByteArray &
     // This is to prevent actions from outside the channel
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
+    if( ircUser == 0 ) {            // don't have the user in memory
+        sendPrivateMessage( nick, "I don't have your information. Retry the command. If this doesn't work, lease reconnect to channel" );
+        singleUserWhois( nick );    // try to update user info
+        return;
+    }
+
     if( m_dbController->isBanned( ircUser->userLogin(), ircUser->ip() ) ) {
         sendPrivateMessage( ircUser->nick(), "you can't use me, you're currently banned. Sucks to be you" );
         return;
@@ -211,6 +217,13 @@ void IrcController::sendLineToUser( const QByteArray& nick, const QByteArray& li
 }
 
 
+void IrcController::singleUserWhois( const QByteArray& nick )
+{
+    qDebug( "IrcController::channelUsersWhois" );
+    sendIrcCommand( "WHO " + nick );
+}
+
+
 void IrcController::updateUserStruct( const QByteArray& oldNick, const QByteArray& line )
 {
     qDebug( "IrcController::updateUserStruct" );
@@ -229,6 +242,12 @@ void IrcController::updateUserStruct( const QByteArray& oldNick, const QByteArra
 void IrcController::messageToUserSlot( const QByteArray& nick, const QByteArray& message )
 {
     sendPrivateMessage( nick, message );
+}
+
+
+void IrcController::singleUserWhoisSlot( const QByteArray& nick )
+{
+    singleUserWhois( nick );
 }
 
 

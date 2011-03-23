@@ -57,6 +57,12 @@ void GameController::gameCommandParser( const QByteArray& nick, const QByteArray
     // This is to prevent actions from outside the channel
     IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
 
+    if( ircUser == 0 ) {                        // don't have the user in memory
+        emit( messageToUserSignal( nick, "I don't have your information. Retry the command. If this doesn't work, lease reconnect to channel" ) );
+        emit( singleUserWhoisSignal( nick ) );  // try to update user info
+        return;
+    }
+
     if( m_db->isBanned( ircUser->userLogin(), ircUser->ip() ) ) {
         emit( messageToUserSignal( ircUser->nick(), "you can't use me, you're currently banned. Sucks to be you" ) );
         return;

@@ -52,8 +52,9 @@ private slots:
     void connectNotify();
 
 signals:
-    void notAuthedSignal( const QByteArray &nick );
     void messageToUserSignal( const QByteArray &nick, const QByteArray &message );
+    void notAuthedSignal( const QByteArray &nick );
+    void singleUserWhoisSignal( const QByteArray &nick );
 
 private:
     /*****************
