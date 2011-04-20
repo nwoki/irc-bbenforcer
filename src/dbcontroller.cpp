@@ -164,30 +164,40 @@ bool DbController::isAuthed( const QByteArray &user, const QByteArray &ip )
 }
 
 
-bool DbController::isBanned( const QByteArray& userLogin, const QByteArray& ip )
+bool DbController::isBanned(const QByteArray& userLogin, const QByteArray& ip)
 {
-    Q_UNUSED( ip );
-    /// NOTICE for now i just check user login name. If this is not sufficient, i'll add the ip to the search criteria
-
-    qDebug( "DbController::isBanned" );
-    if( !openDb() ) {
-        qWarning( "\e[1;31m[FAIL]DbController::isBanned FAILED to open database. Can't verify if user is banned or not \e[0m" );
+    qDebug("DbController::isBanned");
+    if (!openDb()) {
+        qWarning("\e[1;31m[FAIL]DbController::isBanned FAILED to open database. Can't verify if user is banned or not \e[0m");
         return false;
     }
 
     QSqlQuery query;
-    if( !query.exec( "select id from banned where login='" + userLogin + "';" ) ) {
+
+    // look for user login ban
+    if (!query.exec("select id from banned where login='" + userLogin + "';")) {
         qWarning() << "\e[1;31mDb[FAIL]DbController::isBanned FAILED to execute query" << query.lastError() << "\e[0m" ;
         return false;
     }
 
-    if( query.next() ) {  // user is banned
-        qDebug("user is banned");
+    if (query.next()) {
+        qDebug("user LOGIN is banned");
         return true;
-    }
-    else {
-        qDebug( "user is NOT banned " );
-        return false;
+    } else {
+        qDebug("user is NOT banned");
+
+        // look for ip ban
+        if (!query.exec("select id from banned where ip='" + ip + "';")) {
+            qWarning() << "\e[1;31mDb[FAIL]DbController::isBanned FAILED to execute query" << query.lastError() << "\e[0m" ;
+            return false;
+        }
+
+        if (query.next()) {
+            qDebug("user IP is banned");
+            return true;
+        } else {
+            return false;
+        }
     }
 }
 

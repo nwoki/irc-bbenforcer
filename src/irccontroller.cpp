@@ -113,54 +113,55 @@ void IrcController::extractUserWhois( const QByteArray& serverText )
 }
 
 
-void IrcController::ircCommandParser( const QByteArray &nick, const QByteArray &msg, const QByteArray &ip )
+void IrcController::ircCommandParser(const QByteArray &nick, const QByteArray &msg, const QByteArray &ip)
 {
     // check if user is banned. Only non-banned users can use the bot.
     // This is to prevent actions from outside the channel
-    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user(nick);
 
-    if( ircUser == 0 ) {            // don't have the user in memory
-        sendPrivateMessage( nick, "I don't have your information. Retry the command. If this doesn't work, lease reconnect to channel" );
-        singleUserWhois( nick );    // try to update user info
+    if (ircUser == 0) {            // don't have the user in memory
+        sendPrivateMessage(nick, "I don't have your information. Retry the command. If this doesn't work, lease reconnect to channel");
+        singleUserWhois(nick);    // try to update user info
         return;
     }
 
-    if( m_dbController->isBanned( ircUser->userLogin(), ircUser->ip() ) ) {
-        sendPrivateMessage( ircUser->nick(), "you can't use me, you're currently banned. Sucks to be you" );
+    // check if user is banned
+    if (m_dbController->isBanned(ircUser->userLogin(), ircUser->ip())) {
+        sendPrivateMessage(ircUser->nick(), "you can't use me, you're currently banned. Sucks to be you");
         return;
     }
 
     qDebug() << "MESSAGE I GET IS -> " << msg;
-    QList< QByteArray > msgList = msg.split( ' ' ); // split message
+    QList<QByteArray> msgList = msg.split(' ');     // split message
 
-    QString command = msgList.at( 0 );              // command given by user
+    QString command = msgList.at(0);                // command given by user
 
-    if( command == "!help" )                        // print help
-        help( nick );
-    else if( command == "!auth" )                   // auth user ( !auth <password> )
-        auth( nick, msgList, ip );
-    else if( command == "!kick" )                   // !kick <nick> <reason>
-        kick( nick, msgList, ip );
-    else if( command == "!ban" )                    // !ban <nick> <reason>
-        ban( nick, msgList, ip );
-    else if( command == "!op" )                     // !op <nick> <new password>
-        addOp( nick, msgList, ip );
-    else if( command == "!deop" )                   // !deop <nick>
-        deop( nick, msgList, ip );
-    else if( command == "!kickban" )                // !kickban <nick> <kick message>
-        kickBan( nick, msgList, ip );
-    else if( command == "!unban" )                  // unban <nick>
-        unban( nick, msgList, ip );
+    if (command == "!help")                         // print help
+        help(nick);
+    else if (command == "!auth")                    // auth user ( !auth <password> )
+        auth(nick, msgList, ip);
+    else if (command == "!kick")                    // !kick <nick> <reason>
+        kick(nick, msgList, ip);
+    else if (command == "!ban")                     // !ban <nick> <reason>
+        ban(nick, msgList, ip);
+    else if (command == "!op")                      // !op <nick> <new password>
+        addOp(nick, msgList, ip);
+    else if (command == "!deop")                    // !deop <nick>
+        deop(nick, msgList, ip);
+    else if (command == "!kickban")                 // !kickban <nick> <kick message>
+        kickBan(nick, msgList, ip);
+    else if (command == "!unban")                   // unban <nick>
+        unban(nick, msgList, ip);
 }
 
 
-QMap< QString, QString > IrcController::ircSettings()
+QMap<QString, QString> IrcController::ircSettings()
 {
-    QMap< QString, QString >  aux;
-    aux.insert( "ip", m_ip );
-    aux.insert( "port", QString::number( m_port ) );
-    aux.insert( "nick", m_nick );
-    aux.insert( "chan", m_chan );
+    QMap<QString, QString>aux;
+    aux.insert("ip", m_ip);
+    aux.insert("port", QString::number(m_port));
+    aux.insert("nick", m_nick);
+    aux.insert("chan", m_chan);
     return aux;
 }
 
