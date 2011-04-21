@@ -20,12 +20,14 @@ SOURCES += src/main.cpp \
     src/irccontroller.cpp \
     src/dbcontroller.cpp \
     src/gamecontroller.cpp \
-    src/ircuserscontainer.cpp
+    src/ircuserscontainer.cpp \
+    src/logger.cpp
 
 HEADERS += src/brain.h \
     src/irccontroller.h \
     src/dbcontroller.h \
     src/gamecontroller.h \
-    src/ircuserscontainer.h
+    src/ircuserscontainer.h \
+    src/logger.h
 
 OBJECTS_DIR = .obj

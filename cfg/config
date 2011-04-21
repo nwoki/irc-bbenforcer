@@ -11,3 +11,7 @@ rconPass=password
 
 [DATABASE]
 dbName=test.sqlite
+
+[LOGGER]
+#set ABSOLUTE path here
+path=
