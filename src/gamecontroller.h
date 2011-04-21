@@ -30,9 +30,10 @@ class GameController : public QObject
     Q_OBJECT
 
 public:
-    GameController( DbController *db, IrcUsersContainer *ircUsers );
+    GameController(DbController *db, IrcUsersContainer *ircUsers);
 
-    QUdpSocket *connectionSocket() const;   /** get socket used by class for connection to server */
+    /** get socket used by class for connection to server */
+    QUdpSocket *connectionSocket() const;
 
     /**
      * parses game commands sent via irc by user
@@ -40,21 +41,19 @@ public:
      * @param msg message of the user to parse
      * @param ip ip of user
      */
-    void gameCommandParser( const QByteArray &nick, const QByteArray &msg, const QByteArray &ip );
+    void gameCommandParser(const QByteArray &nick, const QByteArray &msg, const QByteArray &ip);
 
-    /**
-     * returns the next user in line that has requested a command with info in response
-     * from the gameserver
-     */
+    /** returns the next user in line that has requested a command with info in response
+     *  from the gameserver */
     QByteArray nextUserInLine();
 
 private slots:
     void connectNotify();
 
 signals:
-    void messageToUserSignal( const QByteArray &nick, const QByteArray &message );
-    void notAuthedSignal( const QByteArray &nick );
-    void singleUserWhoisSignal( const QByteArray &nick );
+    void messageToUserSignal(const QByteArray &nick, const QByteArray &message);
+    void notAuthedSignal(const QByteArray &nick);
+    void singleUserWhoisSignal(const QByteArray &nick);
 
 private:
     /*****************
@@ -66,7 +65,7 @@ private:
      * @param ip ip of nick requesting command
      * @param msgList message sent by nick to send to server
      */
-    void bigText( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void bigText(const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList);
 
 
     /**
@@ -75,7 +74,7 @@ private:
      * @param ip ip of nick requesting command
      * @param msgList message sent by nick to send to server
      */
-    void execConfig( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void execConfig(const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList);
 
 
     /**
@@ -84,7 +83,7 @@ private:
      * @param ip ip of nick requesting command
      * @param msgList message sent by nick containing the gravity value
      */
-    void gravity( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void gravity(const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList);
 
 
     /**
@@ -93,7 +92,7 @@ private:
      * @param ip ip of nick requesting command
      * @param msgList message sent by nick containing the map name
      */
-    void map( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void map(const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList);
 
 
     /**
@@ -102,7 +101,7 @@ private:
      * @param ip ip of nick requesting command
      * @param msgList message sent by nick containing the map name
      */
-    void nextMap( const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList );
+    void nextMap(const QByteArray &nick, const QByteArray &ip, const QList<QByteArray> &msgList);
 
 
     /**
@@ -111,7 +110,7 @@ private:
      * @param ip ip of nick requesting command
      * @param msgList message sent by nick containing the map name ( SHOULD BE EMPTY )
      */
-    void reload( const QByteArray &nick, const QByteArray &ip );
+    void reload(const QByteArray &nick, const QByteArray &ip);
 
 
     /**
@@ -119,7 +118,7 @@ private:
      * @param nick nick requesting command
      * @param ip ip of nick requesting command
      */
-    void restart( const QByteArray &nick, const QByteArray &ip );
+    void restart(const QByteArray &nick, const QByteArray &ip);
 
 
     /**
@@ -127,14 +126,17 @@ private:
      * @param nick nick requesting command
      * @param ip ip of nick requesting command
      */
-    void status( const QByteArray &nick, const QByteArray &ip );
+    void status(const QByteArray &nick, const QByteArray &ip);
 
 
     /***********
      * PRIVATE *
      **********/
-    QByteArray cmdBegin();                  /** returns a QByteArray with the beginning of the Rcon message to send to server */
-    void loadSettings();                    /** load game controller settings */
+    /** returns a QByteArray with the beginning of the Rcon message to send to server */
+    QByteArray cmdBegin();
+
+    /** load game controller settings */
+    void loadSettings();
 
     DbController *m_db;
     IrcUsersContainer *m_ircUsers;
@@ -150,7 +152,7 @@ private:
      * This way from brain I know who to send the response message to
      * in case the game command needs to send back any info
      */
-    QVector< QByteArray > m_userList;
+    QVector<QByteArray> m_userList;
 };
 
 #endif // GAMECONTROLLER_H

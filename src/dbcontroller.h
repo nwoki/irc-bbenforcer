@@ -57,9 +57,11 @@ public:
          */
         bool isValid()
         {
-            if( nick.isEmpty() || userLogin.isEmpty() || ip.isEmpty() )
+            if (nick.isEmpty() || userLogin.isEmpty() || ip.isEmpty()) {
                 return false;
-            else return true;
+            } else {
+                return true;
+            }
         }
     };
 
@@ -74,7 +76,7 @@ public:
      * @param author who did the ban
      * @param date when the client was banned
      */
-    void addToBanned( const QByteArray &nick, const QByteArray &login, const QByteArray &ip, const QByteArray &author, const QString &date );
+    void addToBanned(const QByteArray &nick, const QByteArray &login, const QByteArray &ip, const QByteArray &author, const QString &date);
 
 
     /**
@@ -82,7 +84,7 @@ public:
      * @param userLogin new admin login
      * @param password new admin pass
      */
-    opMsg addToOplist( const QByteArray &userLogin, const QByteArray &password );
+    opMsg addToOplist(const QByteArray &userLogin, const QByteArray &password);
 
 
     /** auth's client to the bot giving admin priviledges
@@ -90,14 +92,14 @@ public:
      * @param password password of user to auth
      * @param ip of user to auth
      */
-    authMsg auth( const QByteArray &user, const QByteArray &password, const QByteArray &ip );
+    authMsg auth(const QByteArray &user, const QByteArray &password, const QByteArray &ip);
 
 
     /**
      * retrieve info about a user from transition database
      * @param userNick user nick to search database for
      */
-    IrcUser getIrcUser( const QByteArray &userNick );
+    IrcUser getIrcUser(const QByteArray &userNick);
 
 
     /**
@@ -105,7 +107,7 @@ public:
      * @param nick nick of user that requests the authentication
      * @param ip ip of the user that requests the authentication
      */
-    bool isAuthed( const QByteArray &user, const QByteArray &ip );
+    bool isAuthed(const QByteArray &user, const QByteArray &ip);
 
 
     /**
@@ -113,14 +115,14 @@ public:
      * @param userLogin user
      * @param user ip
      */
-    bool isBanned( const QByteArray &userLogin, const QByteArray &ip );
+    bool isBanned(const QByteArray &userLogin, const QByteArray &ip);
 
 
     /**
      * removes users from banned table
      * @param user user to remove from banned table
      */
-    bool removeFromBanned( const QByteArray &user );
+    bool removeFromBanned(const QByteArray &user);
 
 
     /**
@@ -128,17 +130,17 @@ public:
      * when this command was given
      * @param user user to deop
      */
-    bool removeFromOplist( const QByteArray &user );
+    bool removeFromOplist(const QByteArray &user);
 
 
 private:
-    bool addToAuthed( const QByteArray &user, const QByteArray &ip );   /** add client to auth */
-    QByteArray cleanUserName( const QByteArray &dirtyUserName );        /** returns clean username without the "~" */
-    void createDatabaseFirstRun();                                      /** creates authed and oplist tables */
-    bool openDb();                                                      /** opens a connection to the database if there is none. Returns the status of the operation */
-    void loadAdmins();                                                  /** loads admins to oplist table */
-    int genNewId( table t );                                            /** creates new id for insertion in oplist table ( DB MUST BE ALREADY OPEN! ) */
-    void setup();                                                       /** setup the database */
+    bool addToAuthed(const QByteArray &user, const QByteArray &ip); /** add client to auth */
+    QByteArray cleanUserName( const QByteArray &dirtyUserName);     /** returns clean username without the "~" */
+    void createDatabaseFirstRun();                                  /** creates authed and oplist tables */
+    bool openDb();                                                  /** opens a connection to the database if there is none. Returns the status of the operation */
+    void loadAdmins();                                              /** loads admins to oplist table */
+    int genNewId(table t);                                          /** creates new id for insertion in oplist table ( DB MUST BE ALREADY OPEN! ) */
+    void setup();                                                   /** setup the database */
 };
 
 #endif // DBCONTROLLER_H

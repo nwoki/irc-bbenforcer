@@ -30,10 +30,10 @@ public:
     class WhoisStruct
     {
     public:
-        WhoisStruct( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip )
-        : m_nick( nick )
-        , m_userLogin( userLogin )
-        , m_ip( ip )
+        WhoisStruct(const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip)
+        : m_nick(nick)
+        , m_userLogin(userLogin)
+        , m_ip(ip)
         {}
 
         const QByteArray nick() { return m_nick; }
@@ -48,19 +48,41 @@ public:
 
     IrcUsersContainer();
 
-    void addUser( const QByteArray &nick, WhoisStruct *userStruct );
-    void removeUser( const QByteArray &nick );
-    bool updateUserNick( const QByteArray &oldNick, const QByteArray &newNick );
-    WhoisStruct* user( const QByteArray &nick ) const;
+    /**
+     * add user info to container
+     * @param nick nick of user to add
+     * @param userStruct respective struct with info on user to add
+     */
+    void addUser(const QByteArray &nick, WhoisStruct *userStruct);
+
+    /**
+     * remove user info from container
+     * @param nick nick of user to search for
+     */
+    void removeUser(const QByteArray &nick);
+
+    /**
+     * update user nick in container
+     * @param oldNick old nick to look for
+     * @param newNick nick to set
+     */
+    bool updateUserNick(const QByteArray &oldNick, const QByteArray &newNick);
+
+    /**
+     * retrieve user information
+     * @param nick user nick to look for
+     */
+    WhoisStruct* user(const QByteArray &nick) const;
 
 public slots:
-    void emitUsers();       /** class emits WhoIsStructs one by one */
+    /** class emits WhoIsStructs one by one */
+    void emitUsers();
 
 signals:
-    void sendUserSignal( IrcUsersContainer::WhoisStruct* ircUser );
+    void sendUserSignal(IrcUsersContainer::WhoisStruct* ircUser);
 
 private:
-    QHash< QByteArray, WhoisStruct* >m_container;
+    QHash<QByteArray, WhoisStruct*>m_container;
 
 };
 

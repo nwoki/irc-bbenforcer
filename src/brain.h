@@ -35,29 +35,23 @@ public:
     Brain();
     ~Brain();
 
-    QByteArray extractIp( const QByteArray &text );         /** extracts ip of client */
-    QByteArray extractText( const QByteArray &text );       /** extracts text sent by client */
-    QByteArray extractNick( const QByteArray &text );       /** extracts user's nick from message */
-    QByteArray extractUserLogin( const QByteArray &text );  /** extracts user's login name on irc server ( nick and login name can be different! )*/
+    QByteArray extractIp(const QByteArray &text);         /** extracts ip of client */
+    QByteArray extractText(const QByteArray &text);       /** extracts text sent by client */
+    QByteArray extractNick(const QByteArray &text);       /** extracts user's nick from message */
+    QByteArray extractUserLogin(const QByteArray &text);  /** extracts user's login name on irc server ( nick and login name can be different! )*/
 
 public slots:
-    /**
-     * checks users in container, for banned. This function is called after the bot has joined the channel
-     */
-    void checkUserOnJoin( IrcUsersContainer::WhoisStruct *ircUser );
+    /** checks users in container, for banned. This function is called after the bot has joined the channel */
+    void checkUserOnJoin(IrcUsersContainer::WhoisStruct *ircUser);
 
 
-    /**
-     * parses data recieved from gameserver and then
+    /** parses data recieved from gameserver and then
      * sends it to the user that requested the info in
-     * case there is a response from the server
-     */
+     * case there is a response from the server */
     void parseGameData();
 
 
-    /**
-     * parses data recieved from irc server
-     */
+    /** parses data recieved from irc server */
     void parseIrcData();
 
 private:

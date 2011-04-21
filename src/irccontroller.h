@@ -31,7 +31,7 @@ class IrcController : public QObject
 {
     Q_OBJECT
 public:
-    IrcController( DbController *db, IrcUsersContainer *ircUsers );
+    IrcController(DbController *db, IrcUsersContainer *ircUsers);
     ~IrcController();
 
     /**
@@ -39,11 +39,10 @@ public:
      * @param nick nick of the new ircClient
      * @param ircClient class for the ircClient
      */
-    void addToTransition( const QByteArray &nick, IrcUsersContainer::WhoisStruct *ircClient );
+    void addToTransition(const QByteArray &nick, IrcUsersContainer::WhoisStruct *ircClient);
 
-    /**
-     * Requests whois for all users in channel
-     */
+
+    /** Requests whois for all users in channel */
     void channelUsersWhois() const;
 
     /** returns socket in 'connection' */
@@ -55,7 +54,7 @@ public:
      * Usually this is called on bot startup
      * @param serverText server message containing all the channels users nicks
      */
-    void extractUserWhois( const QByteArray &serverText );
+    void extractUserWhois(const QByteArray &serverText);
 
     /**
      * parse irc commands given to the bot
@@ -63,16 +62,12 @@ public:
      * @param msg message of the user to parse
      * @param ip ip of user
      */
-    void ircCommandParser( const QByteArray &user, const QByteArray &msg, const QByteArray &ip );
+    void ircCommandParser(const QByteArray &user, const QByteArray &msg, const QByteArray &ip);
 
-    /**
-     * return irc settings as a map
-     */
-    QMap< QString, QString > ircSettings();
+    /** return irc settings as a map */
+    QMap<QString, QString> ircSettings();
 
-    /**
-     * log bot to server
-     */
+    /** log bot to server */
     void logIn();
 
     /**
@@ -82,27 +77,27 @@ public:
      * @param userLogin login to banned
      * @param ip ip to ban
      */
-    void loginBan( const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip );
+    void loginBan(const QByteArray &nick, const QByteArray &userLogin, const QByteArray &ip);
 
     /**
      * respond to ping request from irc server
      * @param pingData ping data sent by server to resend
      */
-    void pong( const QByteArray &pingData );
+    void pong(const QByteArray &pingData);
 
     /**
      * used to send info tu user from outside irccontroller
      * @param nick nick to send message to
      * @param line line to send to nick
      */
-    void sendLineToUser( const QByteArray &nick, const QByteArray &line );
+    void sendLineToUser(const QByteArray &nick, const QByteArray &line);
 
 
     /**
      * requests whois info for user
      * @param nick nick to request who for
      */
-    void singleUserWhois( const QByteArray &nick );
+    void singleUserWhois(const QByteArray &nick);
 
 
     /**
@@ -110,7 +105,7 @@ public:
      * @param oldNick nick before change
      * @param line irc line containing ip and new nick
      */
-    void updateUserStruct( const QByteArray &oldNick, const QByteArray &line );
+    void updateUserStruct(const QByteArray &oldNick, const QByteArray &line);
 
 public slots:
     /**
@@ -118,14 +113,14 @@ public slots:
      * @param nick nick to send message to
      * @param message message to send
      */
-    void messageToUserSlot( const QByteArray &nick, const QByteArray &message );
+    void messageToUserSlot(const QByteArray &nick, const QByteArray &message);
 
 
     /**
      * slot used by gamecontroller
      * @param nick nick to do who check on
      */
-    void singleUserWhoisSlot( const QByteArray &nick );
+    void singleUserWhoisSlot(const QByteArray &nick);
 
 
     /**
@@ -133,12 +128,12 @@ public slots:
      * from other classes
      * @param nick nick to send message to
      */
-    void userNotAuthedSlot( const QByteArray& nick );
+    void userNotAuthedSlot(const QByteArray& nick);
 
 private slots:
     void connectNotify();
     void disconnectNotify();
-    void handleSocketErrors( QAbstractSocket::SocketError );
+    void handleSocketErrors(QAbstractSocket::SocketError);
     void reconnect();
 
 private:
@@ -150,7 +145,7 @@ private:
      * @param msg msg given by user
      * @param ip user ip
      */
-    void addOp( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+    void addOp(const QByteArray &nick, const QList<QByteArray> &msg, const QByteArray &ip);
 
 
     /**
@@ -159,7 +154,7 @@ private:
      * @param msg msg given by user
      * @param ip user ip
      */
-    void auth( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+    void auth(const QByteArray &nick, const QList<QByteArray> &msg, const QByteArray &ip);
 
 
     /**
@@ -168,7 +163,7 @@ private:
      * @param msg msg given by user
      * @param ip user ip
      */
-    void ban( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+    void ban(const QByteArray &nick, const QList<QByteArray> &msg, const QByteArray &ip);
 
 
     /**
@@ -176,7 +171,7 @@ private:
      * @param userLogin login name to banned
      * @param ip ip to ban
      */
-    void botBan( const QByteArray &userLogin, const QByteArray &ip );
+    void botBan(const QByteArray &userLogin, const QByteArray &ip);
 
 
     /**
@@ -184,7 +179,7 @@ private:
      * @param nick nick to kick from chan
      * @param reason reason for kick
      */
-    void botKick( const QByteArray &nick, const QString &reason );
+    void botKick(const QByteArray &nick, const QString &reason);
 
 
     /**
@@ -193,14 +188,14 @@ private:
      * @param msg message sent by user
      * @param ip ip of user requesting kick
      */
-    void deop( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+    void deop(const QByteArray &nick, const QList<QByteArray> &msg, const QByteArray &ip);
 
 
     /**
      * print help message for user ( or send help file? )
      * @param nick user to send info to
      */
-    void help( const QByteArray &nick );
+    void help(const QByteArray &nick);
 
 
     /**
@@ -209,7 +204,7 @@ private:
      * @param msg message sent by user
      * @param ip ip of user requesting kick
      */
-    void kick( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+    void kick(const QByteArray &nick, const QList<QByteArray> &msg, const QByteArray &ip);
 
 
     /**
@@ -218,7 +213,7 @@ private:
      * @param msg message sent by user
      * @param ip ip of user requesting kick
      */
-    void kickBan( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+    void kickBan(const QByteArray &nick, const QList<QByteArray> &msg, const QByteArray &ip);
 
 
     /**
@@ -227,7 +222,7 @@ private:
      * @param msg message sent by user
      * @param ip ip of user requesting unban
      */
-    void unban( const QByteArray &nick, const QList< QByteArray > &msg, const QByteArray &ip );
+    void unban(const QByteArray &nick, const QList<QByteArray> &msg, const QByteArray &ip);
 
     /****************
     * bot functions *
@@ -236,46 +231,47 @@ private:
      * generate a channel message
      * @param messageToSend message to send to channel
      */
-    QByteArray genChannelMessage( const QByteArray &messageToSend );
+    QByteArray genChannelMessage(const QByteArray &messageToSend);
 
     /**
      * generate a private message
      * @param nick nick to send message to
      * @param messageToSend message to send ti nick
      */
-    QByteArray genPrivateMessage( const QByteArray &nick, const QByteArray &messageToSend );
+    QByteArray genPrivateMessage(const QByteArray &nick, const QByteArray &messageToSend);
 
     /**
      * send default not authed notification to user in chan
      * @param nick nick to send message to
      */
-    void sendNotAuthedMessage( const QByteArray &nick );
+    void sendNotAuthedMessage(const QByteArray &nick);
 
     /**
      * sends private message to user in chan
      * @param nick nick to send message to
      * @param message message to send
      */
-    void sendPrivateMessage( const QByteArray &nick, const QByteArray &message );
+    void sendPrivateMessage(const QByteArray &nick, const QByteArray &message);
 
     /**
      * gather whois info about a user or the current chan. If an empty value is
      * passed a channel whois is launched asking for info on all users in the channel.
      * @param nick nick to do whois lookup on
      */
-    void whois( const QByteArray &nick = QByteArray() );
+    void whois(const QByteArray &nick = QByteArray());
 
 
     /***********
      * PRIVATE *
      **********/
-    void loadSettings();                                /** load bot's irc settings from config file */
+    /** load bot's irc settings from config file */
+    void loadSettings();
 
     /**
      * sends irc command to irc channel the bot is on
      * @param command command to send
      */
-    void sendIrcCommand( const QByteArray &command ) const;
+    void sendIrcCommand(const QByteArray &command) const;
 
     QTcpSocket *m_connection;
     DbController *m_dbController;
