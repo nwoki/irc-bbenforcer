@@ -26,25 +26,25 @@
 #include <QTimer>
 
 Brain::Brain()
-    : QObject( 0 )
-    , m_dbControl( new DbController() )
-    , m_ircUsers( new IrcUsersContainer() )
-    , m_gameControl( new GameController( m_dbControl, m_ircUsers ) )
-    , m_ircControl( new IrcController( m_dbControl, m_ircUsers ) )
+    : QObject(0)
+    , m_dbControl(new DbController())
+    , m_ircUsers(new IrcUsersContainer())
+    , m_gameControl(new GameController(m_dbControl, m_ircUsers))
+    , m_ircControl(new IrcController(m_dbControl, m_ircUsers))
 {
-    qDebug( "Brain::Brain" );
+    qDebug("Brain::Brain");
 
     // read from server when data is available
-    connect( m_ircControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseIrcData() ) );
-    connect( m_gameControl->connectionSocket(), SIGNAL( readyRead() ), this, SLOT( parseGameData() ) );
+    connect(m_ircControl->connectionSocket(), SIGNAL(readyRead()), this, SLOT(parseIrcData()));
+    connect(m_gameControl->connectionSocket(), SIGNAL(readyRead()), this, SLOT(parseGameData()));
 
     // connect gameControl signals
-    connect( m_gameControl, SIGNAL( notAuthedSignal( QByteArray ) ), m_ircControl, SLOT( userNotAuthedSlot( QByteArray ) ) );
-    connect( m_gameControl, SIGNAL( messageToUserSignal( QByteArray, QByteArray ) ), m_ircControl, SLOT( messageToUserSlot( QByteArray, QByteArray ) ) );
-    connect( m_gameControl, SIGNAL( singleUserWhoisSignal( QByteArray ) ), m_ircControl, SLOT( singleUserWhoisSlot( QByteArray ) ) );
+    connect(m_gameControl, SIGNAL(notAuthedSignal(QByteArray)), m_ircControl, SLOT(userNotAuthedSlot(QByteArray)));
+    connect(m_gameControl, SIGNAL(messageToUserSignal(QByteArray, QByteArray)), m_ircControl, SLOT(messageToUserSlot(QByteArray, QByteArray)));
+    connect(m_gameControl, SIGNAL(singleUserWhoisSignal(QByteArray)), m_ircControl, SLOT(singleUserWhoisSlot(QByteArray)));
 
     // connect ircUsersContainer
-    connect( m_ircUsers, SIGNAL( sendUserSignal( IrcUsersContainer::WhoisStruct* ) ), this, SLOT( checkUserOnJoin( IrcUsersContainer::WhoisStruct* ) ) );
+    connect(m_ircUsers, SIGNAL(sendUserSignal(IrcUsersContainer::WhoisStruct*)), this, SLOT(checkUserOnJoin(IrcUsersContainer::WhoisStruct*)));
 }
 
 Brain::~Brain()
@@ -54,42 +54,40 @@ Brain::~Brain()
     delete m_ircControl;
 }
 
-QByteArray Brain::extractIp( const QByteArray &text )
+QByteArray Brain::extractIp(const QByteArray &text)
 {
-    QList< QByteArray >aux = text.split( '@' );
-    aux = aux.value( 1 ).split( ' ' );
-    return aux.value( 0 ).trimmed();
+    QList<QByteArray>aux = text.split('@');
+    aux = aux.value(1).split(' ');
+    return aux.value(0).trimmed();
 }
 
-QByteArray Brain::extractText( const QByteArray &text )
+QByteArray Brain::extractText(const QByteArray &text)
 {
-    QList< QByteArray >aux = text.split( ':' );
-    return aux.value( 2 ).trimmed();
+    QList<QByteArray>aux = text.split(':');
+    return aux.value(2).trimmed();
 }
 
-QByteArray Brain::extractNick( const QByteArray &text )
+QByteArray Brain::extractNick(const QByteArray &text)
 {
-    QList< QByteArray >aux = text.split( '!' );
-    return aux.value( 0 ).right( aux.value( 0 ).size() - 1 ).trimmed(); // eliminate the ":"
+    QList<QByteArray>aux = text.split('!');
+    return aux.value(0).right(aux.value(0).size() - 1).trimmed(); // eliminate the ":"
 }
 
-QByteArray Brain::extractUserLogin( const QByteArray& text )
+QByteArray Brain::extractUserLogin(const QByteArray& text)
 {
-    QList< QByteArray >aux = text.split( '@' );
-    QList< QByteArray >aux2 = aux.at( 0 ).split( '!' );
+    QList<QByteArray>aux = text.split('@');
+    QList<QByteArray>aux2 = aux.at(0).split('!');
 
-    return aux2.value( 1 );
+    return aux2.value(1);
 }
 
 /*******************
 *      SLOTS       *
 ********************/
-void Brain::checkUserOnJoin( IrcUsersContainer::WhoisStruct* ircUser )
+void Brain::checkUserOnJoin(IrcUsersContainer::WhoisStruct* ircUser)
 {
-    if( ircUser != 0 ) {
-        if( m_dbControl->isBanned( ircUser->userLogin(), ircUser->ip() ) )
-            m_ircControl->loginBan( ircUser->nick(), ircUser->userLogin(), ircUser->ip() );
-    }
+    if (ircUser != 0 && m_dbControl->isBanned(ircUser->userLogin(), ircUser->ip()))
+            m_ircControl->loginBan(ircUser->nick(), ircUser->userLogin(), ircUser->ip());
 }
 
 
@@ -97,21 +95,22 @@ void Brain::parseGameData()
 {
     QByteArray nick = m_gameControl->nextUserInLine();
 
-    while( m_gameControl->connectionSocket()->hasPendingDatagrams() ) {
+    while (m_gameControl->connectionSocket()->hasPendingDatagrams()) {
         qint64 bytesToRead = m_gameControl->connectionSocket()->pendingDatagramSize();
-        QByteArray serverText = m_gameControl->connectionSocket()->read( bytesToRead );
+        QByteArray serverText = m_gameControl->connectionSocket()->read(bytesToRead);
 
 //         // use for debugging
 //         qDebug() << "GAME RECIEVED DATA: " << serverText;
 
-        QList<QByteArray> msgLines = serverText.split( '\n' );
+        QList<QByteArray> msgLines = serverText.split('\n');
 
-        if( !nick.isEmpty() ) {
-            for( int i = 0; i < msgLines.count(); i++ ) {
-                QByteArray msg = msgLines.at( i );
+        if (!nick.isEmpty()) {
+            for (int i = 0; i < msgLines.count(); i++) {
+                QByteArray msg = msgLines.at(i);
 
-                if( !msg.isEmpty() && !msg.contains( "print" ) )    // don't need annoying "print" on output
-                    m_ircControl->sendLineToUser( nick, msg );
+                // don't need annoying "print" on output
+                if (!msg.isEmpty() && !msg.contains("print"))
+                    m_ircControl->sendLineToUser(nick, msg);
             }
         }
     }
