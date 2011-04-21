@@ -21,6 +21,7 @@
 #include "gamecontroller.h"
 #include "irccontroller.h"
 #include "ircuserscontainer.h"
+#include "logger.h"
 
 #include <QDebug>
 #include <QTimer>
@@ -31,6 +32,7 @@ Brain::Brain()
     , m_ircUsers(new IrcUsersContainer())
     , m_gameControl(new GameController(m_dbControl, m_ircUsers))
     , m_ircControl(new IrcController(m_dbControl, m_ircUsers))
+    , m_logger(new Logger())
 {
     qDebug("Brain::Brain");
 
@@ -196,8 +198,10 @@ void Brain::parseIrcData()
                 m_gameControl->gameCommandParser(nick, msg, ip);
             }
 
-            else                                                // nothing, normal msg
+            else {                                              // nothing, normal msg
                 qDebug() << nick << " SENT NORMAL MESSAGE.LOG IT SOMEWHERE!";
+                m_logger->log(nick, msg);
+            }
 
         }
 

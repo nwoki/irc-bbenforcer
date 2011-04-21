@@ -26,6 +26,7 @@
 class DbController;
 class GameController;
 class IrcController;
+class Logger;
 
 class Brain : public QObject
 {
@@ -59,6 +60,7 @@ private:
     IrcUsersContainer *m_ircUsers;
     GameController *m_gameControl;
     IrcController *m_ircControl;
+    Logger *m_logger;
 
     QByteArray m_ircData;
 };

@@ -26,10 +26,21 @@ class Logger : public QFile
 public:
     Logger();
 
+    /** log message to file
+     * @param nick nick
+     * @param msg message to log
+     */
+    void log(const QByteArray &nick, QByteArray msg);
+
 private:
 
     /** generates filename for logfile using system date */
     QString generateFileName();
+
+    /** generates a timestamp. If nick is empty it returns only the time
+     * @param nick nick that "talked"
+     */
+    QByteArray generateTimeStamp(const QByteArray &nick = QByteArray());
 
     /** load logger settings from config file */
     void loadSettings();

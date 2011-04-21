@@ -32,9 +32,46 @@ Logger::Logger()
     loadSettings();
 }
 
+void Logger::log(const QByteArray& nick, QByteArray msg)
+{
+    if (m_valid) {
+        if (!isOpen()) {
+            qDebug("file not open");
+            open(QIODevice::WriteOnly|QIODevice::Text|QIODevice::Append);
+        } else {
+            qDebug("alreaady open");
+        }
+
+        // add timestamp
+        msg.prepend(generateTimeStamp(nick));
+        // add newline
+        msg.append("\n");
+
+        // write to log
+        write(msg);
+        flush();
+    } else {
+        qDebug() << "\e[1;31mLogger::log Can't log to file:'" << fileName() << "'. It is invalid. Check config\e[0m";
+        return;
+    }
+}
+
+
 QString Logger::generateFileName()
 {
     return QDate::currentDate().toString("dd-MM-yyyy");
+}
+
+QByteArray Logger::generateTimeStamp(const QByteArray& nick)
+{
+    QByteArray timeStamp;
+
+    timeStamp.append(QTime::currentTime().toString("[hh:mm] ").toUtf8());
+
+    if (!nick.isEmpty())
+        timeStamp.append("<" + nick + "> : ");
+
+    return timeStamp;
 }
 
 void Logger::loadSettings()
@@ -43,7 +80,7 @@ void Logger::loadSettings()
     QSettings settings(QDir::toNativeSeparators("cfg/config"), QSettings::IniFormat);
 
     if (settings.status() == QSettings::FormatError) {
-        qWarning("\e[1;31m Logger::loadSettings FAILED to load settings. Format Error, check your config file\e[0m");
+        qWarning("\e[1;31mLogger::loadSettings FAILED to load settings. Format Error, check your config file\e[0m");
         return;
     }
 
@@ -53,7 +90,7 @@ void Logger::loadSettings()
 
     QString path = settings.value("path").toString();
 
-    if (!QDir::isAbsolutePath(path)) {
+    if (!QDir::isAbsolutePath(path) || path.isEmpty()) {
         // create relative DEFAULT path
         qDebug("\e[0;33mLogger::loadSettings using default path for log files because no valid path was specified in config\e[0m");
 
