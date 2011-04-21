@@ -278,7 +278,7 @@ private:
     IrcUsersContainer *m_ircUsers;
 
     int m_port;
-    QString m_chan, m_ip, m_nick;
+    QString m_chan, m_ip, m_nick, m_serverPass;
 };
 
 #endif // IRCCONTROLLER_H

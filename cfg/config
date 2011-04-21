@@ -1,8 +1,9 @@
 [IRC]
-ip=irc.quakenet.org
-port=6667
-chan=#testtest
-nick=ioQIC_bot
+ip=server.2s2h.com
+port=1337
+chan=#2s2h
+nick=ioQIC
+pass=i'mthebot
 
 [GAMESERVER]
 ip=localhost

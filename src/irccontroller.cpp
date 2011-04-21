@@ -26,27 +26,28 @@
 
 #define end "\r\n"
 
-IrcController::IrcController( DbController *db, IrcUsersContainer *ircUsers )
-    : m_connection( new QTcpSocket() )
-    , m_dbController( db )
-    , m_ircUsers( ircUsers )
-    , m_port( 0 )
-    , m_chan( QString() )
-    , m_ip( QString() )
-    , m_nick( QString() )
+IrcController::IrcController(DbController *db, IrcUsersContainer *ircUsers)
+    : m_connection(new QTcpSocket())
+    , m_dbController(db)
+    , m_ircUsers(ircUsers)
+    , m_port(0)
+    , m_chan(QString())
+    , m_ip(QString())
+    , m_nick(QString())
+    , m_serverPass(QString())
 {
-    qDebug( "IrcController::IrcController" );
+    qDebug("IrcController::IrcController");
 
-    connect( m_connection, SIGNAL( connected() ), this, SLOT( connectNotify() ) );
+    connect(m_connection, SIGNAL(connected()), this, SLOT(connectNotify()));
     //connection error
-    connect( m_connection, SIGNAL( error( QAbstractSocket::SocketError ) ), this, SLOT( handleSocketErrors( QAbstractSocket::SocketError ) ) );
+    connect(m_connection, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(handleSocketErrors(QAbstractSocket::SocketError)));
     //disconnect notification
-    connect( m_connection, SIGNAL( disconnected() ), this, SLOT( disconnectNotify() ) );
+    connect(m_connection, SIGNAL(disconnected()), this, SLOT(disconnectNotify()));
 
     loadSettings();
 
     // start connection
-    m_connection->connectToHost( m_ip, m_port, QIODevice::ReadWrite );
+    m_connection->connectToHost(m_ip, m_port, QIODevice::ReadWrite);
 }
 
 
@@ -160,6 +161,7 @@ QMap<QString, QString> IrcController::ircSettings()
     QMap<QString, QString>aux;
     aux.insert("ip", m_ip);
     aux.insert("port", QString::number(m_port));
+    aux.insert("pass", m_serverPass);
     aux.insert("nick", m_nick);
     aux.insert("chan", m_chan);
     return aux;
@@ -173,6 +175,10 @@ void IrcController::logIn()
     QMap< QString, QString > data = ircSettings();
     QString nick = data.value( "nick" );
 
+    // password
+    QByteArray bytePass("PASS ");
+    bytePass.append(data.value("pass"));
+
     // nick
     QByteArray byteNick( "NICK " );
     byteNick.append( nick + end );
@@ -185,11 +191,12 @@ void IrcController::logIn()
     QByteArray byteJoin( "JOIN " );
     byteJoin.append( data.value( "chan" ) + end );
 
-
+    qDebug() << bytePass;
     qDebug() << byteNick;
     qDebug() << byteUser;
     qDebug() << byteJoin;
 
+    m_connection->write(bytePass);
     m_connection->write( byteNick );
     m_connection->write( byteUser );
     m_connection->write( byteJoin );
@@ -640,39 +647,45 @@ void IrcController::whois( const QByteArray &nick )
 void IrcController::loadSettings()
 {
     //set config file
-    QSettings settings( QDir::toNativeSeparators( "cfg/config" ), QSettings::IniFormat );
+    QSettings settings(QDir::toNativeSeparators("cfg/config"), QSettings::IniFormat);
 
-    if( settings.status() == QSettings::FormatError ) {
-        qWarning( "\e[1;31m Connection::loadSettings FAILED to load settings. Format Error, check your config file\e[0m" );
+    if (settings.status() == QSettings::FormatError) {
+        qWarning("\e[1;31m Connection::loadSettings FAILED to load settings. Format Error, check your config file\e[0m");
         return;
     }
 
-    qDebug( "Connection::loadSettings IRC SETTINGS" );
+    qDebug("Connection::loadSettings IRC SETTINGS");
 
-    settings.beginReadArray( "IRC" );
-    m_ip = settings.value( "ip" ).toString();
+    settings.beginReadArray("IRC");
+    m_ip = settings.value("ip").toString();
 
-    if( m_ip.isEmpty() ) {
-        qWarning( "\e[1;31mConnection::loadSettings can't load 'ip'. Check your config file\e[0m" );
+    if (m_ip.isEmpty()) {
+        qWarning("\e[1;31mConnection::loadSettings can't load 'ip'. Check your config file\e[0m");
         return;
     }
 
     bool ok;
-    m_port = settings.value( "port" ).toInt( &ok );
-    if( !ok ) {
-        qWarning( "\e[1;31mConnection::loadSettings can't load 'port'. Check your config file.\e[0m" );
+    m_port = settings.value("port").toInt(&ok);
+    if (!ok) {
+        qWarning("\e[1;31mConnection::loadSettings can't load 'port'. Check your config file.\e[0m");
         return;
     }
 
-    m_chan = settings.value( "chan" ).toString();
-    if( m_chan.isEmpty() ) {
-        qWarning( "\e[1;31mConnection::loadSettings can't load 'chan'. Check your config file\e[0m" );
+    m_chan = settings.value("chan").toString();
+    if (m_chan.isEmpty()) {
+        qWarning("\e[1;31mConnection::loadSettings can't load 'chan'. Check your config file\e[0m");
         return;
     }
 
-    m_nick = settings.value( "nick" ).toString();
-    if( m_nick.isEmpty() ) {
-        qWarning( "\e[1;31mConnection::loadSettings can't load 'nick'. Check your config file\e[0m" );
+    m_nick = settings.value("nick").toString();
+    if (m_nick.isEmpty()) {
+        qWarning("\e[1;31mConnection::loadSettings can't load 'nick'. Check your config file\e[0m");
+        return;
+    }
+
+    m_serverPass = settings.value("pass").toString();
+    if (m_serverPass.isEmpty()) {
+        qWarning("\e[1;31mConnection::loadSettings can't load 'serverPass'. Check your config file\e[0m");
         return;
     }
     qDebug() << ircSettings();
