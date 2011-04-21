@@ -452,33 +452,38 @@ void IrcController::botKick( const QByteArray& nick, const QString& reason )
 }
 
 
-void IrcController::deop(const QByteArray& nick, const QList< QByteArray >& msg, const QByteArray& ip)
+void IrcController::deop(const QByteArray& nick, const QList<QByteArray>& msg, const QByteArray& ip)
 {
     // user requesting command
-    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user( nick );
+    IrcUsersContainer::WhoisStruct *ircUser = m_ircUsers->user(nick);
 
-    if( !m_dbController->isAuthed( ircUser->userLogin(), ip ) ) { // not authed
-        sendNotAuthedMessage( nick );
+    if (!m_dbController->isAuthed(ircUser->userLogin(), ip)) { // not authed
+        sendNotAuthedMessage(nick);
         return;
     }
 
-    if( msg.size() != 2 ) { // wrong arguments
-        sendPrivateMessage( nick, "wrong arguments. [usage]'!deop <nick>'" );
+    if (msg.size() != 2) { // wrong arguments
+        sendPrivateMessage(nick, "wrong arguments. [usage]'!deop <nick>'");
         return;
     }
 
     // get user to deop
-    ircUser = m_ircUsers->user( msg.at( 1 ) );
+    ircUser = m_ircUsers->user(msg.at(1));
 
-    if( ircUser != 0 ) {
-        if( !m_dbController->removeFromOplist( ircUser->userLogin() ) )
-            sendPrivateMessage( nick, "ERROR: couldn't remove user from oplist" );
-        else
-            sendPrivateMessage( nick, "user removed successfully from database" );
+    if (ircUser == 0) { // can't find user info
+        sendPrivateMessage(nick, "can't find user info for " + msg.at(1));
+    } else {
+        if (!m_dbController->removeFromOplist(ircUser->userLogin()))
+            sendPrivateMessage(nick, "ERROR: couldn't remove user from oplist");
+        else {
+            sendPrivateMessage(nick, "user removed successfully from database");
+
+            // remove op status from channel as well
+            QByteArray cmd("MODE ");
+            cmd.append(m_chan + " -o " + nick + end);
+            sendIrcCommand(cmd);
+        }
     }
-    // can't find user info
-    else
-        sendPrivateMessage( nick, "can't find user info for " + msg.at( 1 ) );
 }
 
 
