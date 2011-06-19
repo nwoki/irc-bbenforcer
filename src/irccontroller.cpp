@@ -170,7 +170,7 @@ QMap<QString, QString> IrcController::ircSettings()
 
 void IrcController::logIn()
 {
-    qDebug( "IrcController::logIn" );
+    qDebug("IrcController::logIn");
     // get settings
     QMap< QString, QString > data = ircSettings();
     QString nick = data.value( "nick" );
@@ -196,10 +196,10 @@ void IrcController::logIn()
     qDebug() << byteUser;
     qDebug() << byteJoin;
 
-    m_connection->write(bytePass);
-    m_connection->write( byteNick );
-    m_connection->write( byteUser );
-    m_connection->write( byteJoin );
+    sendIrcCommand(bytePass);
+    sendIrcCommand(byteNick);
+    sendIrcCommand(byteUser);
+    sendIrcCommand(byteJoin);
 }
 
 

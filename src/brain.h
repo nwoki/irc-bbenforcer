@@ -32,7 +32,6 @@ class Brain : public QObject
 {
     Q_OBJECT
 public:
-
     Brain();
     ~Brain();
 
@@ -45,12 +44,10 @@ public slots:
     /** checks users in container, for banned. This function is called after the bot has joined the channel */
     void checkUserOnJoin(IrcUsersContainer::WhoisStruct *ircUser);
 
-
     /** parses data recieved from gameserver and then
      * sends it to the user that requested the info in
      * case there is a response from the server */
     void parseGameData();
-
 
     /** parses data recieved from irc server */
     void parseIrcData();

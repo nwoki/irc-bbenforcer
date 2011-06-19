@@ -138,6 +138,12 @@ void Brain::parseIrcData()
         else if (m_ircData.contains("*** No ident response") || m_ircData.contains("*** No Ident response"))
             m_ircControl->logIn();
 
+        // got this with SBNC. Need to send info after this reply from server.
+        else if (m_ircData.contains("*** Forward DNS reply received")) {
+            m_ircControl->logIn();
+            m_ircControl->channelUsersWhois();
+        }
+
         // send back ping data
         else if (m_ircData.contains("PING"))
             m_ircControl->pong(m_ircData);

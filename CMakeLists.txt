@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
-project (ioQIC-bbenforcer)
+project(ioQIC-BBEnforcer)
 
 # Include our extra FindFoo.cmake files.
 set (CMAKE_MODULE_PATH
-     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
-     ${CMAKE_MODULE_PATH}
+#     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
+    ${CMAKE_MODULE_PATH}
 )
 
 set(QT_MIN_VERSION "4.7.3")
@@ -13,9 +13,9 @@ FIND_PACKAGE(Qt4 ${QT_MIN_VERSION} REQUIRED)
 # load modules needed for the project. "include" sets up the ${QT_LIBRARIES} var
 set(QT_USE_QTNETWORK TRUE)
 set(QT_USE_QTSQL TRUE)
-set(QT_USE_QTXML TRUE)
 
 include(${QT_USE_FILE})
+
 
 set(ioQIC_SRCS
     src/brain.cpp
@@ -35,9 +35,9 @@ set(ioQIC_HEADERS
     src/ircuserscontainer.h
 )
 
+# wrap the moc files
 QT4_WRAP_CPP(ioQIC_HEADERS_MOC ${ioQIC_HEADERS})
 
+add_executable(ioQIC-BBEnforcer ${ioQIC_SRCS} ${ioQIC_HEADERS_MOC})
 
-add_executable(ioQIC-bbenforcer ${ioQIC_SRCS} ${ioQIC_HEADERS_MOC})
-
-target_link_libraries(ioQIC-bbenforcer ${QT_LIBRARIES})
+target_link_libraries(ioQIC-BBEnforcer ${QT_LIBRARIES})
